@@ -1,7 +1,7 @@
-package com.lootrbigchest.menu;
+package com.lootrbiggerchest.menu;
 
-import com.lootrbigchest.LootrBigChest;
-import com.lootrbigchest.LootrBigChestConfig;
+import com.lootrbiggerchest.LootrBiggerChest;
+import com.lootrbiggerchest.LootrBiggerChestConfig;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
@@ -12,7 +12,7 @@ import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
-public class LootrBigChestMenu extends AbstractContainerMenu {
+public class LootrBiggerChestMenu extends AbstractContainerMenu {
 
     private final int rows;
     private final int cols;
@@ -20,7 +20,7 @@ public class LootrBigChestMenu extends AbstractContainerMenu {
     private final Container container;
     private final ContainerType containerType;
 
-    public LootrBigChestMenu(MenuType<?> type, int containerId, Inventory playerInv,
+    public LootrBiggerChestMenu(MenuType<?> type, int containerId, Inventory playerInv,
                              Container container, int rows, int cols, ContainerType ct) {
         super(type, containerId);
         this.rows = rows;
@@ -55,60 +55,60 @@ public class LootrBigChestMenu extends AbstractContainerMenu {
         }
     }
 
-    public LootrBigChestMenu(MenuType<?> type, int containerId, Inventory playerInv, int rows, int cols, ContainerType ct) {
+    public LootrBiggerChestMenu(MenuType<?> type, int containerId, Inventory playerInv, int rows, int cols, ContainerType ct) {
         this(type, containerId, playerInv, new SimpleContainer(rows * cols), rows, cols, ct);
     }
 
-    public LootrBigChestMenu(int containerId, Inventory playerInv, ContainerType ct) {
-        this(LootrBigChest.getMenu(ct), containerId, playerInv,
+    public LootrBiggerChestMenu(int containerId, Inventory playerInv, ContainerType ct) {
+        this(LootrBiggerChest.getMenu(ct), containerId, playerInv,
                 new SimpleContainer(getRows(ct) * getCols(ct)), getRows(ct), getCols(ct), ct);
     }
 
     @SuppressWarnings("resource")
-    public static LootrBigChestMenu fromNetwork(int id, Inventory inv, FriendlyByteBuf data, ContainerType ct) {
-        MenuType<LootrBigChestMenu> type = LootrBigChest.getMenu(ct);
+    public static LootrBiggerChestMenu fromNetwork(int id, Inventory inv, FriendlyByteBuf data, ContainerType ct) {
+        MenuType<LootrBiggerChestMenu> type = LootrBiggerChest.getMenu(ct);
         try {
-            int[] pending = LootrBigChest.PENDING_MENU_SIZE.get();
+            int[] pending = LootrBiggerChest.PENDING_MENU_SIZE.get();
             if (pending != null) {
                 int rows = pending[0];
                 int cols = pending[1];
                 data.writeInt(rows);
                 data.writeInt(cols);
-                return new LootrBigChestMenu(type, id, inv, new SimpleContainer(rows * cols), rows, cols, ct);
+                return new LootrBiggerChestMenu(type, id, inv, new SimpleContainer(rows * cols), rows, cols, ct);
             }
             if (data != null && data.readableBytes() >= 8) {
                 int rows = data.readInt();
                 int cols = data.readInt();
-                return new LootrBigChestMenu(type, id, inv, new SimpleContainer(rows * cols), rows, cols, ct);
+                return new LootrBiggerChestMenu(type, id, inv, new SimpleContainer(rows * cols), rows, cols, ct);
             }
-            int[] clientSize = LootrBigChest.CLIENT_SIZES.remove(Integer.valueOf(id));
+            int[] clientSize = LootrBiggerChest.CLIENT_SIZES.remove(Integer.valueOf(id));
             if (clientSize != null) {
-                return new LootrBigChestMenu(type, id, inv,
+                return new LootrBiggerChestMenu(type, id, inv,
                         new SimpleContainer(clientSize[0] * clientSize[1]), clientSize[0], clientSize[1], ct);
             }
             int rows = getRows(ct);
             int cols = getCols(ct);
-            return new LootrBigChestMenu(type, id, inv, new SimpleContainer(rows * cols), rows, cols, ct);
+            return new LootrBiggerChestMenu(type, id, inv, new SimpleContainer(rows * cols), rows, cols, ct);
         } finally {
-            LootrBigChest.PENDING_MENU_SIZE.remove();
+            LootrBiggerChest.PENDING_MENU_SIZE.remove();
         }
     }
 
     private static int getRows(ContainerType ct) {
         return switch (ct) {
-            case CHEST -> LootrBigChestConfig.getChestRows();
-            case BARREL -> LootrBigChestConfig.getBarrelRows();
-            case SHULKER -> LootrBigChestConfig.getShulkerRows();
-            case MINECART -> LootrBigChestConfig.getMinecartRows();
+            case CHEST -> LootrBiggerChestConfig.getChestRows();
+            case BARREL -> LootrBiggerChestConfig.getBarrelRows();
+            case SHULKER -> LootrBiggerChestConfig.getShulkerRows();
+            case MINECART -> LootrBiggerChestConfig.getMinecartRows();
         };
     }
 
     private static int getCols(ContainerType ct) {
         return switch (ct) {
-            case CHEST -> LootrBigChestConfig.getChestColumns();
-            case BARREL -> LootrBigChestConfig.getBarrelColumns();
-            case SHULKER -> LootrBigChestConfig.getShulkerColumns();
-            case MINECART -> LootrBigChestConfig.getMinecartColumns();
+            case CHEST -> LootrBiggerChestConfig.getChestColumns();
+            case BARREL -> LootrBiggerChestConfig.getBarrelColumns();
+            case SHULKER -> LootrBiggerChestConfig.getShulkerColumns();
+            case MINECART -> LootrBiggerChestConfig.getMinecartColumns();
         };
     }
 

@@ -1,4 +1,4 @@
-package com.lootrbigchest.mixin;
+package com.lootrbiggerchest.mixin;
 
 import net.minecraft.core.NonNullList;
 import net.minecraft.world.entity.vehicle.AbstractMinecartContainer;

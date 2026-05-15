@@ -1,9 +1,9 @@
-package com.lootrbigchest.mixin;
+package com.lootrbiggerchest.mixin;
 
-import com.lootrbigchest.LootrBigChest;
-import com.lootrbigchest.LootrBigChestConfig;
-import com.lootrbigchest.menu.LootrBigChestMenu;
-import com.lootrbigchest.menu.LootrBigChestMenu.ContainerType;
+import com.lootrbiggerchest.LootrBiggerChest;
+import com.lootrbiggerchest.LootrBiggerChestConfig;
+import com.lootrbiggerchest.menu.LootrBiggerChestMenu;
+import com.lootrbiggerchest.menu.LootrBiggerChestMenu.ContainerType;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
@@ -28,14 +28,14 @@ public class LootrChestMinecartEntityMixin {
 
     @Inject(method = "getContainerSize", at = @At("HEAD"), cancellable = true)
     private void modifyGetContainerSize(CallbackInfoReturnable<Integer> cir) {
-        if (LootrBigChestConfig.isExpanded()) {
+        if (LootrBiggerChestConfig.isExpanded()) {
             CompoundTag data = ((Entity) (Object) this).getPersistentData();
             int rows, cols;
             if (data.contains(ROWS_KEY)) {
                 rows = data.getInt(ROWS_KEY);
                 cols = data.getInt(COLS_KEY);
             } else {
-                int[] size = LootrBigChestConfig.pickMinecartSize();
+                int[] size = LootrBiggerChestConfig.pickMinecartSize();
                 rows = size[0];
                 cols = size[1];
                 data.putInt(ROWS_KEY, rows);
@@ -54,7 +54,7 @@ public class LootrChestMinecartEntityMixin {
     @Inject(method = "createMenu", at = @At("HEAD"), cancellable = true)
     private void onCreateMenu(int id, Inventory playerInventoryIn,
                               CallbackInfoReturnable<AbstractContainerMenu> cir) {
-        if (!LootrBigChestConfig.isExpanded()) return;
+        if (!LootrBiggerChestConfig.isExpanded()) return;
 
         CompoundTag data = ((Entity) (Object) this).getPersistentData();
         int rows, cols;
@@ -62,7 +62,7 @@ public class LootrChestMinecartEntityMixin {
             rows = data.getInt(ROWS_KEY);
             cols = data.getInt(COLS_KEY);
         } else {
-            int[] size = LootrBigChestConfig.pickMinecartSize();
+            int[] size = LootrBiggerChestConfig.pickMinecartSize();
             rows = size[0];
             cols = size[1];
             data.putInt(ROWS_KEY, rows);
@@ -70,17 +70,17 @@ public class LootrChestMinecartEntityMixin {
         }
 
         if (playerInventoryIn.player instanceof ServerPlayer sp) {
-            LootrBigChest.sendMenuSize(sp, id, rows, cols);
+            LootrBiggerChest.sendMenuSize(sp, id, rows, cols);
         }
 
-        cir.setReturnValue(new LootrBigChestMenu(
-                LootrBigChest.getMenu(ContainerType.MINECART), id, playerInventoryIn,
+        cir.setReturnValue(new LootrBiggerChestMenu(
+                LootrBiggerChest.getMenu(ContainerType.MINECART), id, playerInventoryIn,
                 (Container) (Object) this, rows, cols, ContainerType.MINECART));
     }
 
     @Inject(method = "addAdditionalSaveData", at = @At("TAIL"))
     private void onAddAdditionalSaveData(CompoundTag tag, CallbackInfo ci) {
-        if (!LootrBigChestConfig.isExpanded()) return;
+        if (!LootrBiggerChestConfig.isExpanded()) return;
         CompoundTag data = ((Entity) (Object) this).getPersistentData();
         if (data.contains(ROWS_KEY)) {
             tag.putInt(ROWS_KEY, data.getInt(ROWS_KEY));
@@ -90,7 +90,7 @@ public class LootrChestMinecartEntityMixin {
 
     @Inject(method = "readAdditionalSaveData", at = @At("HEAD"))
     private void onReadAdditionalSaveData(CompoundTag tag, CallbackInfo ci) {
-        if (!LootrBigChestConfig.isExpanded()) return;
+        if (!LootrBiggerChestConfig.isExpanded()) return;
         if (tag.contains(ROWS_KEY)) {
             CompoundTag data = ((Entity) (Object) this).getPersistentData();
             data.putInt(ROWS_KEY, tag.getInt(ROWS_KEY));

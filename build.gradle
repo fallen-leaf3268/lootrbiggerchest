@@ -34,31 +34,31 @@ task('patchRefmap') {
         def refmapFile = layout.buildDirectory.file('tmp/compileJava/compileJava-refmap.json').get().asFile
         def refmap = new groovy.json.JsonSlurper().parse(refmapFile)
 
-        refmap.mappings.'com/lootrbigchest/mixin/LootrBarrelBlockEntityMixin' = [
+        refmap.mappings.'com/lootrbiggerchest/mixin/LootrBarrelBlockEntityMixin' = [
             'getContainerSize': 'Lnoobanidus/mods/lootr/block/entities/LootrBarrelBlockEntity;m_6643_()I',
             'saveAdditional': 'Lnoobanidus/mods/lootr/block/entities/LootrBarrelBlockEntity;m_183515_(Lnet/minecraft/nbt/CompoundTag;)V',
             'load': 'Lnoobanidus/mods/lootr/block/entities/LootrBarrelBlockEntity;m_142466_(Lnet/minecraft/nbt/CompoundTag;)V',
             'items': 'Lnet/minecraft/world/level/block/entity/BarrelBlockEntity;f_58591_'
         ]
-        refmap.mappings.'com/lootrbigchest/mixin/LootrShulkerBlockEntityMixin' = [
+        refmap.mappings.'com/lootrbiggerchest/mixin/LootrShulkerBlockEntityMixin' = [
             'getContainerSize': 'Lnoobanidus/mods/lootr/block/entities/LootrShulkerBlockEntity;m_6643_()I',
             'saveAdditional': 'Lnoobanidus/mods/lootr/block/entities/LootrShulkerBlockEntity;m_183515_(Lnet/minecraft/nbt/CompoundTag;)V',
             'load': 'Lnoobanidus/mods/lootr/block/entities/LootrShulkerBlockEntity;m_142466_(Lnet/minecraft/nbt/CompoundTag;)V',
             'itemStacks': 'Lnet/minecraft/world/level/block/entity/ShulkerBoxBlockEntity;f_59645_'
         ]
-        refmap.mappings.'com/lootrbigchest/mixin/SpecialChestInventoryMixin' = [
+        refmap.mappings.'com/lootrbiggerchest/mixin/SpecialChestInventoryMixin' = [
             'createMenu': 'Lnoobanidus/mods/lootr/data/SpecialChestInventory;m_7208_(ILnet/minecraft/world/entity/player/Inventory;Lnet/minecraft/world/entity/player/Player;)Lnet/minecraft/world/inventory/AbstractContainerMenu;'
         ]
-        refmap.mappings.'com/lootrbigchest/mixin/LootrChestMinecartEntityMixin' = [
+        refmap.mappings.'com/lootrbiggerchest/mixin/LootrChestMinecartEntityMixin' = [
             'getContainerSize': 'Lnoobanidus/mods/lootr/entity/LootrChestMinecartEntity;m_6643_()I',
             'createMenu': 'Lnoobanidus/mods/lootr/entity/LootrChestMinecartEntity;m_7402_(ILnet/minecraft/world/entity/player/Inventory;)Lnet/minecraft/world/inventory/AbstractContainerMenu;',
             'addAdditionalSaveData': 'Lnoobanidus/mods/lootr/entity/LootrChestMinecartEntity;m_7380_(Lnet/minecraft/nbt/CompoundTag;)V',
             'readAdditionalSaveData': 'Lnoobanidus/mods/lootr/entity/LootrChestMinecartEntity;m_7378_(Lnet/minecraft/nbt/CompoundTag;)V'
         ]
-        refmap.mappings.'com/lootrbigchest/mixin/AbstractMinecartContainerAccessor' = [
+        refmap.mappings.'com/lootrbiggerchest/mixin/AbstractMinecartContainerAccessor' = [
             'itemStacks': 'Lnet/minecraft/world/entity/vehicle/AbstractMinecartContainer;f_38202_'
         ]
-        refmap.mappings.'com/lootrbigchest/mixin/ChestBlockEntityMixin' = [
+        refmap.mappings.'com/lootrbiggerchest/mixin/ChestBlockEntityMixin' = [
             'getContainerSize': 'Lnet/minecraft/world/level/block/entity/ChestBlockEntity;m_6643_()I',
             'saveAdditional': 'Lnet/minecraft/world/level/block/entity/ChestBlockEntity;m_183515_(Lnet/minecraft/nbt/CompoundTag;)V',
             'load': 'Lnet/minecraft/world/level/block/entity/ChestBlockEntity;m_142466_(Lnet/minecraft/nbt/CompoundTag;)V',

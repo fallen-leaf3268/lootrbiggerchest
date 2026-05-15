@@ -1,7 +1,7 @@
-package com.lootrbigchest.mixin;
+package com.lootrbiggerchest.mixin;
 
-import com.lootrbigchest.LootrBigChest;
-import com.lootrbigchest.LootrBigChestConfig;
+import com.lootrbiggerchest.LootrBiggerChest;
+import com.lootrbiggerchest.LootrBiggerChestConfig;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import noobanidus.mods.lootr.api.LootFiller;
@@ -25,7 +25,7 @@ public abstract class ChestDataMixin {
 
     @Inject(method = "setSize", at = @At("HEAD"), cancellable = true)
     private void onSetSize(int size, CallbackInfo ci) {
-        if (LootrBigChestConfig.isExpanded()) {
+        if (LootrBiggerChestConfig.isExpanded()) {
             ci.cancel();
         }
     }
@@ -35,10 +35,10 @@ public abstract class ChestDataMixin {
     private void beforeCreateInventory(ServerPlayer player, LootFiller filler,
                                         RandomizableContainerBlockEntity tile,
                                         CallbackInfoReturnable<SpecialChestInventory> cir) {
-        if (!LootrBigChestConfig.isExpanded()) return;
+        if (!LootrBiggerChestConfig.isExpanded()) return;
         if (tile == null) return;
 
-        int[] size = LootrBigChest.getOrCreateSize(tile, null);
+        int[] size = LootrBiggerChest.getOrCreateSize(tile, null);
         if (size[0] != 3 || size[1] != 9) {
             setChestDataSize(size[0] * size[1]);
         }

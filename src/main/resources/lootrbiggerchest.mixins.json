@@ -1,7 +1,7 @@
 {
     "required": true,
     "minVersion": "0.8",
-    "package": "com.lootrbigchest.mixin",
+    "package": "com.lootrbiggerchest.mixin",
     "compatibilityLevel": "JAVA_17",
     "refmap": "lootrbigchest.refmap.json",
     "mixins": [

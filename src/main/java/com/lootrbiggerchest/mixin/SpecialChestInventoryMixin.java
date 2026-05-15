@@ -1,9 +1,9 @@
-package com.lootrbigchest.mixin;
+package com.lootrbiggerchest.mixin;
 
-import com.lootrbigchest.LootrBigChest;
-import com.lootrbigchest.LootrBigChestConfig;
-import com.lootrbigchest.menu.LootrBigChestMenu;
-import com.lootrbigchest.menu.LootrBigChestMenu.ContainerType;
+import com.lootrbiggerchest.LootrBiggerChest;
+import com.lootrbiggerchest.LootrBiggerChestConfig;
+import com.lootrbiggerchest.menu.LootrBiggerChestMenu;
+import com.lootrbiggerchest.menu.LootrBiggerChestMenu.ContainerType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
@@ -30,7 +30,7 @@ public class SpecialChestInventoryMixin {
     private void beforeCreateMenu(int id, Inventory inventory, Player player,
                                   CallbackInfoReturnable<AbstractContainerMenu> cir) {
         SpecialChestInventory self = (SpecialChestInventory) (Object) this;
-        if (!LootrBigChestConfig.isExpanded()) return;
+        if (!LootrBiggerChestConfig.isExpanded()) return;
 
         Level level = player.level();
         BaseContainerBlockEntity tile = self.getTile(level);
@@ -42,7 +42,7 @@ public class SpecialChestInventoryMixin {
                 rows = data.getInt(ROWS_KEY);
                 cols = data.getInt(COLS_KEY);
             } else {
-                int[] size = LootrBigChestConfig.pickBarrelSize();
+                int[] size = LootrBiggerChestConfig.pickBarrelSize();
                 rows = size[0];
                 cols = size[1];
                 data.putInt(ROWS_KEY, rows);
@@ -54,7 +54,7 @@ public class SpecialChestInventoryMixin {
                 rows = data.getInt(ROWS_KEY);
                 cols = data.getInt(COLS_KEY);
             } else {
-                int[] size = LootrBigChestConfig.pickShulkerSize();
+                int[] size = LootrBiggerChestConfig.pickShulkerSize();
                 rows = size[0];
                 cols = size[1];
                 data.putInt(ROWS_KEY, rows);
@@ -66,7 +66,7 @@ public class SpecialChestInventoryMixin {
                 rows = data.getInt(ROWS_KEY);
                 cols = data.getInt(COLS_KEY);
             } else {
-                int[] size = LootrBigChestConfig.pickChestSize();
+                int[] size = LootrBiggerChestConfig.pickChestSize();
                 rows = size[0];
                 cols = size[1];
                 data.putInt(ROWS_KEY, rows);
@@ -80,14 +80,14 @@ public class SpecialChestInventoryMixin {
                     rows = data.getInt(ROWS_KEY);
                     cols = data.getInt(COLS_KEY);
                 } else {
-                    int[] size = LootrBigChestConfig.pickMinecartSize();
+                    int[] size = LootrBiggerChestConfig.pickMinecartSize();
                     rows = size[0];
                     cols = size[1];
                     data.putInt(ROWS_KEY, rows);
                     data.putInt(COLS_KEY, cols);
                 }
             } else {
-                int[] size = LootrBigChestConfig.pickMinecartSize();
+                int[] size = LootrBiggerChestConfig.pickMinecartSize();
                 rows = size[0];
                 cols = size[1];
             }
@@ -99,11 +99,11 @@ public class SpecialChestInventoryMixin {
             self.resizeInventory(newSize);
         }
 
-        LootrBigChest.PENDING_MENU_SIZE.remove();
-        LootrBigChest.PENDING_MENU_SIZE.set(new int[]{rows, cols});
+        LootrBiggerChest.PENDING_MENU_SIZE.remove();
+        LootrBiggerChest.PENDING_MENU_SIZE.set(new int[]{rows, cols});
 
         if (player instanceof ServerPlayer sp) {
-            LootrBigChest.sendMenuSize(sp, id, rows, cols);
+            LootrBiggerChest.sendMenuSize(sp, id, rows, cols);
         }
     }
 
@@ -111,7 +111,7 @@ public class SpecialChestInventoryMixin {
     private void afterCreateMenu(int id, Inventory inventory, Player player,
                                  CallbackInfoReturnable<AbstractContainerMenu> cir) {
         SpecialChestInventory self = (SpecialChestInventory) (Object) this;
-        if (!LootrBigChestConfig.isExpanded()) return;
+        if (!LootrBiggerChestConfig.isExpanded()) return;
 
         Level level = player.level();
         BaseContainerBlockEntity tile = self.getTile(level);
@@ -141,13 +141,13 @@ public class SpecialChestInventoryMixin {
                 rows = data.getInt(ROWS_KEY);
                 cols = data.getInt(COLS_KEY);
             } else {
-                int[] size = LootrBigChestConfig.pickMinecartSize();
+                int[] size = LootrBiggerChestConfig.pickMinecartSize();
                 rows = size[0];
                 cols = size[1];
             }
         }
 
-        cir.setReturnValue(new LootrBigChestMenu(
-                LootrBigChest.getMenu(ct), id, inventory, self, rows, cols, ct));
+        cir.setReturnValue(new LootrBiggerChestMenu(
+                LootrBiggerChest.getMenu(ct), id, inventory, self, rows, cols, ct));
     }
 }

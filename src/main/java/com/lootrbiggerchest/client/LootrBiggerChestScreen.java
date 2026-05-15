@@ -1,6 +1,6 @@
-package com.lootrbigchest.client;
+package com.lootrbiggerchest.client;
 
-import com.lootrbigchest.menu.LootrBigChestMenu;
+import com.lootrbiggerchest.menu.LootrBiggerChestMenu;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -9,7 +9,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 
-public class LootrBigChestScreen extends AbstractContainerScreen<LootrBigChestMenu> {
+public class LootrBiggerChestScreen extends AbstractContainerScreen<LootrBiggerChestMenu> {
 
     private static final ResourceLocation TEX =
             new ResourceLocation("textures/gui/container/generic_54.png");
@@ -31,7 +31,7 @@ public class LootrBigChestScreen extends AbstractContainerScreen<LootrBigChestMe
     private final int rows;
     private final int cols;
 
-    public LootrBigChestScreen(LootrBigChestMenu menu, Inventory playerInv, Component title) {
+    public LootrBiggerChestScreen(LootrBiggerChestMenu menu, Inventory playerInv, Component title) {
         super(menu, playerInv, title);
         this.rows = menu.getRows();
         this.cols = menu.getCols();

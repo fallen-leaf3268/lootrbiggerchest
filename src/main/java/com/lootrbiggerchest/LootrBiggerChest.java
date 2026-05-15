@@ -1,8 +1,8 @@
-package com.lootrbigchest;
+package com.lootrbiggerchest;
 
-import com.lootrbigchest.client.LootrBigChestScreen;
-import com.lootrbigchest.menu.LootrBigChestMenu;
-import com.lootrbigchest.menu.LootrBigChestMenu.ContainerType;
+import com.lootrbiggerchest.client.LootrBiggerChestScreen;
+import com.lootrbiggerchest.menu.LootrBiggerChestMenu;
+import com.lootrbiggerchest.menu.LootrBiggerChestMenu.ContainerType;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -32,35 +32,35 @@ import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
-@Mod(LootrBigChest.MOD_ID)
-public class LootrBigChest {
+@Mod(LootrBiggerChest.MOD_ID)
+public class LootrBiggerChest {
 
-    public static final String MOD_ID = "lootrbigchest";
+    public static final String MOD_ID = "lootrbiggerchest";
 
     private static final DeferredRegister<MenuType<?>> MENU_TYPES =
             DeferredRegister.create(ForgeRegistries.MENU_TYPES, MOD_ID);
 
     public static final ThreadLocal<int[]> PENDING_MENU_SIZE = new ThreadLocal<>();
 
-    public static final RegistryObject<MenuType<LootrBigChestMenu>> CHEST_MENU =
+    public static final RegistryObject<MenuType<LootrBiggerChestMenu>> CHEST_MENU =
             MENU_TYPES.register("lootr_chest", () ->
                     IForgeMenuType.create((id, inv, data) ->
-                            LootrBigChestMenu.fromNetwork(id, inv, data, ContainerType.CHEST)));
+                            LootrBiggerChestMenu.fromNetwork(id, inv, data, ContainerType.CHEST)));
 
-    public static final RegistryObject<MenuType<LootrBigChestMenu>> BARREL_MENU =
+    public static final RegistryObject<MenuType<LootrBiggerChestMenu>> BARREL_MENU =
             MENU_TYPES.register("lootr_barrel", () ->
                     IForgeMenuType.create((id, inv, data) ->
-                            LootrBigChestMenu.fromNetwork(id, inv, data, ContainerType.BARREL)));
+                            LootrBiggerChestMenu.fromNetwork(id, inv, data, ContainerType.BARREL)));
 
-    public static final RegistryObject<MenuType<LootrBigChestMenu>> SHULKER_MENU =
+    public static final RegistryObject<MenuType<LootrBiggerChestMenu>> SHULKER_MENU =
             MENU_TYPES.register("lootr_shulker", () ->
                     IForgeMenuType.create((id, inv, data) ->
-                            LootrBigChestMenu.fromNetwork(id, inv, data, ContainerType.SHULKER)));
+                            LootrBiggerChestMenu.fromNetwork(id, inv, data, ContainerType.SHULKER)));
 
-    public static final RegistryObject<MenuType<LootrBigChestMenu>> MINECART_MENU =
+    public static final RegistryObject<MenuType<LootrBiggerChestMenu>> MINECART_MENU =
             MENU_TYPES.register("lootr_minecart", () ->
                     IForgeMenuType.create((id, inv, data) ->
-                            LootrBigChestMenu.fromNetwork(id, inv, data, ContainerType.MINECART)));
+                            LootrBiggerChestMenu.fromNetwork(id, inv, data, ContainerType.MINECART)));
 
     private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(MOD_ID, "menu_size"),
@@ -71,8 +71,8 @@ public class LootrBigChest {
 
     public static final ConcurrentHashMap<Integer, int[]> CLIENT_SIZES = new ConcurrentHashMap<>();
 
-    public LootrBigChest() {
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, LootrBigChestConfig.COMMON_SPEC);
+    public LootrBiggerChest() {
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, LootrBiggerChestConfig.COMMON_SPEC);
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         MENU_TYPES.register(modBus);
         modBus.addListener(this::onClientSetup);
@@ -85,10 +85,10 @@ public class LootrBigChest {
 
     private void onClientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
-            MenuScreens.register(CHEST_MENU.get(), LootrBigChestScreen::new);
-            MenuScreens.register(BARREL_MENU.get(), LootrBigChestScreen::new);
-            MenuScreens.register(SHULKER_MENU.get(), LootrBigChestScreen::new);
-            MenuScreens.register(MINECART_MENU.get(), LootrBigChestScreen::new);
+            MenuScreens.register(CHEST_MENU.get(), LootrBiggerChestScreen::new);
+            MenuScreens.register(BARREL_MENU.get(), LootrBiggerChestScreen::new);
+            MenuScreens.register(SHULKER_MENU.get(), LootrBiggerChestScreen::new);
+            MenuScreens.register(MINECART_MENU.get(), LootrBiggerChestScreen::new);
         });
     }
 
@@ -121,7 +121,7 @@ public class LootrBigChest {
         }
     }
 
-    public static MenuType<LootrBigChestMenu> getMenu(ContainerType type) {
+    public static MenuType<LootrBiggerChestMenu> getMenu(ContainerType type) {
         return switch (type) {
             case CHEST -> CHEST_MENU.get();
             case BARREL -> BARREL_MENU.get();
@@ -131,7 +131,7 @@ public class LootrBigChest {
     }
 
     public static int[] getOrCreateSize(BlockEntity be, Entity entity) {
-        if (!LootrBigChestConfig.isExpanded()) return new int[]{3, 9};
+        if (!LootrBiggerChestConfig.isExpanded()) return new int[]{3, 9};
         try {
             if (be != null) {
                 CompoundTag data = be.getPersistentData();
@@ -139,11 +139,11 @@ public class LootrBigChest {
                     return new int[]{data.getInt("LBCRows"), data.getInt("LBCCols")};
                 int[] size;
                 if (be instanceof LootrBarrelBlockEntity)
-                    size = LootrBigChestConfig.pickBarrelSize();
+                    size = LootrBiggerChestConfig.pickBarrelSize();
                 else if (be instanceof LootrShulkerBlockEntity)
-                    size = LootrBigChestConfig.pickShulkerSize();
+                    size = LootrBiggerChestConfig.pickShulkerSize();
                 else
-                    size = LootrBigChestConfig.pickChestSize();
+                    size = LootrBiggerChestConfig.pickChestSize();
                 data.putInt("LBCRows", size[0]);
                 data.putInt("LBCCols", size[1]);
                 return size;
@@ -152,7 +152,7 @@ public class LootrBigChest {
                 CompoundTag data = entity.getPersistentData();
                 if (data.contains("LBCRows"))
                     return new int[]{data.getInt("LBCRows"), data.getInt("LBCCols")};
-                int[] size = LootrBigChestConfig.pickMinecartSize();
+                int[] size = LootrBiggerChestConfig.pickMinecartSize();
                 data.putInt("LBCRows", size[0]);
                 data.putInt("LBCCols", size[1]);
                 return size;

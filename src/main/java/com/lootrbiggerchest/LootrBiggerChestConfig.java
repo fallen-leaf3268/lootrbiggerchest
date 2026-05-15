@@ -1,4 +1,4 @@
-package com.lootrbigchest;
+package com.lootrbiggerchest;
 
 import net.minecraftforge.common.ForgeConfigSpec;
 import org.apache.commons.lang3.tuple.Pair;
@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class LootrBigChestConfig {
+public class LootrBiggerChestConfig {
 
     private static final Random RANDOM = new Random();
 
