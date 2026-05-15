@@ -1,4 +1,4 @@
-# Lootr Big Chest
+# Lootr Bigger Chest
 
 扩展 Lootr 模组所有容器的容量，支持固定尺寸或加权随机尺寸。
 
@@ -19,7 +19,7 @@
 
 ## 配置
 
-配置文件位于 `config/lootrbigchest-common.toml`：
+配置文件位于 `config/lootrbiggerchest-common.toml`：
 
 ### 固定尺寸
 
