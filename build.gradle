@@ -1,0 +1,105 @@
+plugins {
+    id 'net.minecraftforge.gradle' version '[6.0,6.2)'
+    id 'org.spongepowered.mixin' version '0.7.+'
+}
+
+version = mod_version
+group = mod_group_id
+
+base {
+    archivesName = mod_id
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+minecraft {
+    mappings channel: mapping_channel, version: mapping_version
+}
+
+mixin {
+    add sourceSets.main, "${mod_id}.refmap.json"
+    config "${mod_id}.mixins.json"
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+
+    compileOnly fg.deobf(files("libs/lootr-forge-1.20-0.7.35.94.jar"))
+}
+
+task('patchRefmap') {
+    dependsOn compileJava
+    doLast {
+        def refmapFile = layout.buildDirectory.file('tmp/compileJava/compileJava-refmap.json').get().asFile
+        def refmap = new groovy.json.JsonSlurper().parse(refmapFile)
+
+        refmap.mappings.'com/lootrbigchest/mixin/LootrBarrelBlockEntityMixin' = [
+            'getContainerSize': 'Lnoobanidus/mods/lootr/block/entities/LootrBarrelBlockEntity;m_6643_()I',
+            'saveAdditional': 'Lnoobanidus/mods/lootr/block/entities/LootrBarrelBlockEntity;m_183515_(Lnet/minecraft/nbt/CompoundTag;)V',
+            'load': 'Lnoobanidus/mods/lootr/block/entities/LootrBarrelBlockEntity;m_142466_(Lnet/minecraft/nbt/CompoundTag;)V',
+            'items': 'Lnet/minecraft/world/level/block/entity/BarrelBlockEntity;f_58591_'
+        ]
+        refmap.mappings.'com/lootrbigchest/mixin/LootrShulkerBlockEntityMixin' = [
+            'getContainerSize': 'Lnoobanidus/mods/lootr/block/entities/LootrShulkerBlockEntity;m_6643_()I',
+            'saveAdditional': 'Lnoobanidus/mods/lootr/block/entities/LootrShulkerBlockEntity;m_183515_(Lnet/minecraft/nbt/CompoundTag;)V',
+            'load': 'Lnoobanidus/mods/lootr/block/entities/LootrShulkerBlockEntity;m_142466_(Lnet/minecraft/nbt/CompoundTag;)V',
+            'itemStacks': 'Lnet/minecraft/world/level/block/entity/ShulkerBoxBlockEntity;f_59645_'
+        ]
+        refmap.mappings.'com/lootrbigchest/mixin/SpecialChestInventoryMixin' = [
+            'createMenu': 'Lnoobanidus/mods/lootr/data/SpecialChestInventory;m_7208_(ILnet/minecraft/world/entity/player/Inventory;Lnet/minecraft/world/entity/player/Player;)Lnet/minecraft/world/inventory/AbstractContainerMenu;'
+        ]
+        refmap.mappings.'com/lootrbigchest/mixin/LootrChestMinecartEntityMixin' = [
+            'getContainerSize': 'Lnoobanidus/mods/lootr/entity/LootrChestMinecartEntity;m_6643_()I',
+            'createMenu': 'Lnoobanidus/mods/lootr/entity/LootrChestMinecartEntity;m_7402_(ILnet/minecraft/world/entity/player/Inventory;)Lnet/minecraft/world/inventory/AbstractContainerMenu;',
+            'addAdditionalSaveData': 'Lnoobanidus/mods/lootr/entity/LootrChestMinecartEntity;m_7380_(Lnet/minecraft/nbt/CompoundTag;)V',
+            'readAdditionalSaveData': 'Lnoobanidus/mods/lootr/entity/LootrChestMinecartEntity;m_7378_(Lnet/minecraft/nbt/CompoundTag;)V'
+        ]
+        refmap.mappings.'com/lootrbigchest/mixin/AbstractMinecartContainerAccessor' = [
+            'itemStacks': 'Lnet/minecraft/world/entity/vehicle/AbstractMinecartContainer;f_38202_'
+        ]
+        refmap.mappings.'com/lootrbigchest/mixin/ChestBlockEntityMixin' = [
+            'getContainerSize': 'Lnet/minecraft/world/level/block/entity/ChestBlockEntity;m_6643_()I',
+            'saveAdditional': 'Lnet/minecraft/world/level/block/entity/ChestBlockEntity;m_183515_(Lnet/minecraft/nbt/CompoundTag;)V',
+            'load': 'Lnet/minecraft/world/level/block/entity/ChestBlockEntity;m_142466_(Lnet/minecraft/nbt/CompoundTag;)V',
+            'items': 'Lnet/minecraft/world/level/block/entity/ChestBlockEntity;f_59073_'
+        ]
+        refmapFile.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(refmap))
+        def copyFile = layout.buildDirectory.file("tmp/compileJava/${mod_id}.refmap.json").get().asFile
+        copyFile.text = refmapFile.text
+    }
+}
+
+tasks.named('processResources', ProcessResources).configure {
+    dependsOn patchRefmap
+}
+
+tasks.named('processResources', ProcessResources).configure {
+    var replaceProperties = [
+            minecraft_version: minecraft_version, minecraft_version_range: minecraft_version_range,
+            forge_version: forge_version, forge_version_range: forge_version_range,
+            loader_version_range: loader_version_range,
+            mod_id: mod_id, mod_name: mod_name, mod_license: mod_license, mod_version: mod_version,
+            mod_authors: mod_authors, mod_description: mod_description,
+    ]
+    inputs.properties replaceProperties
+
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+        expand replaceProperties + [project: project]
+    }
+}
+
+jar {
+    manifest {
+        attributes([
+            'Specification-Title'     : mod_id,
+            'Implementation-Title'    : mod_name,
+            'Implementation-Version'  : mod_version,
+            'MixinConfigs'            : "${mod_id}.mixins.json"
+        ])
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
