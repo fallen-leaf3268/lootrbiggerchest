@@ -40,7 +40,7 @@ public class LootrBiggerChest {
     private static final DeferredRegister<MenuType<?>> MENU_TYPES =
             DeferredRegister.create(ForgeRegistries.MENU_TYPES, MOD_ID);
 
-    public static final ThreadLocal<int[]> PENDING_MENU_SIZE = new ThreadLocal<>();
+    public static final ConcurrentHashMap<Integer, int[]> PENDING_MENU_SIZES = new ConcurrentHashMap<>();
 
     public static final RegistryObject<MenuType<LootrBiggerChestMenu>> CHEST_MENU =
             MENU_TYPES.register("lootr_chest", () ->
@@ -130,32 +130,44 @@ public class LootrBiggerChest {
         };
     }
 
+    public static final String ROWS_KEY = "LBCRows";
+    public static final String COLS_KEY = "LBCCols";
+
+    public static int[] resolveOrCreateSize(CompoundTag data, java.util.function.Supplier<int[]> pickSize) {
+        if (data.contains(ROWS_KEY))
+            return new int[]{data.getInt(ROWS_KEY), data.getInt(COLS_KEY)};
+        int[] size = pickSize.get();
+        data.putInt(ROWS_KEY, size[0]);
+        data.putInt(COLS_KEY, size[1]);
+        return size;
+    }
+
+    public static void saveSizeToTag(CompoundTag persistentData, CompoundTag saveTag) {
+        if (persistentData.contains(ROWS_KEY)) {
+            saveTag.putInt(ROWS_KEY, persistentData.getInt(ROWS_KEY));
+            saveTag.putInt(COLS_KEY, persistentData.getInt(COLS_KEY));
+        }
+    }
+
+    public static void loadSizeFromTag(CompoundTag saveTag, CompoundTag persistentData) {
+        if (saveTag.contains(ROWS_KEY)) {
+            persistentData.putInt(ROWS_KEY, saveTag.getInt(ROWS_KEY));
+            persistentData.putInt(COLS_KEY, saveTag.getInt(COLS_KEY));
+        }
+    }
+
     public static int[] getOrCreateSize(BlockEntity be, Entity entity) {
         if (!LootrBiggerChestConfig.isExpanded()) return new int[]{3, 9};
         try {
             if (be != null) {
-                CompoundTag data = be.getPersistentData();
-                if (data.contains("LBCRows"))
-                    return new int[]{data.getInt("LBCRows"), data.getInt("LBCCols")};
-                int[] size;
                 if (be instanceof LootrBarrelBlockEntity)
-                    size = LootrBiggerChestConfig.pickBarrelSize();
-                else if (be instanceof LootrShulkerBlockEntity)
-                    size = LootrBiggerChestConfig.pickShulkerSize();
-                else
-                    size = LootrBiggerChestConfig.pickChestSize();
-                data.putInt("LBCRows", size[0]);
-                data.putInt("LBCCols", size[1]);
-                return size;
+                    return resolveOrCreateSize(be.getPersistentData(), LootrBiggerChestConfig::pickBarrelSize);
+                if (be instanceof LootrShulkerBlockEntity)
+                    return resolveOrCreateSize(be.getPersistentData(), LootrBiggerChestConfig::pickShulkerSize);
+                return resolveOrCreateSize(be.getPersistentData(), LootrBiggerChestConfig::pickChestSize);
             }
             if (entity != null) {
-                CompoundTag data = entity.getPersistentData();
-                if (data.contains("LBCRows"))
-                    return new int[]{data.getInt("LBCRows"), data.getInt("LBCCols")};
-                int[] size = LootrBiggerChestConfig.pickMinecartSize();
-                data.putInt("LBCRows", size[0]);
-                data.putInt("LBCCols", size[1]);
-                return size;
+                return resolveOrCreateSize(entity.getPersistentData(), LootrBiggerChestConfig::pickMinecartSize);
             }
         } catch (Exception ignored) {}
         return new int[]{3, 9};

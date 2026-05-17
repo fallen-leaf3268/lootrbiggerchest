@@ -23,32 +23,18 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(value = LootrChestMinecartEntity.class)
 public class LootrChestMinecartEntityMixin {
 
-    private static final String ROWS_KEY = "LBCRows";
-    private static final String COLS_KEY = "LBCCols";
-
     @Inject(method = "getContainerSize", at = @At("HEAD"), cancellable = true)
     private void modifyGetContainerSize(CallbackInfoReturnable<Integer> cir) {
-        if (LootrBiggerChestConfig.isExpanded()) {
-            CompoundTag data = ((Entity) (Object) this).getPersistentData();
-            int rows, cols;
-            if (data.contains(ROWS_KEY)) {
-                rows = data.getInt(ROWS_KEY);
-                cols = data.getInt(COLS_KEY);
-            } else {
-                int[] size = LootrBiggerChestConfig.pickMinecartSize();
-                rows = size[0];
-                cols = size[1];
-                data.putInt(ROWS_KEY, rows);
-                data.putInt(COLS_KEY, cols);
-            }
-            int totalSize = rows * cols;
-            AbstractMinecartContainerAccessor acc = (AbstractMinecartContainerAccessor) this;
-            NonNullList<ItemStack> stacks = acc.getItemStacks();
-            if (stacks.size() != totalSize) {
-                acc.setItemStacks(NonNullList.withSize(totalSize, ItemStack.EMPTY));
-            }
-            cir.setReturnValue(totalSize);
+        if (!LootrBiggerChestConfig.isExpanded()) return;
+        CompoundTag data = ((Entity) (Object) this).getPersistentData();
+        int[] size = LootrBiggerChest.resolveOrCreateSize(data, LootrBiggerChestConfig::pickMinecartSize);
+        int totalSize = size[0] * size[1];
+        AbstractMinecartContainerAccessor acc = (AbstractMinecartContainerAccessor) this;
+        NonNullList<ItemStack> stacks = acc.getItemStacks();
+        if (stacks.size() != totalSize) {
+            acc.setItemStacks(NonNullList.withSize(totalSize, ItemStack.EMPTY));
         }
+        cir.setReturnValue(totalSize);
     }
 
     @Inject(method = "createMenu", at = @At("HEAD"), cancellable = true)
@@ -57,17 +43,8 @@ public class LootrChestMinecartEntityMixin {
         if (!LootrBiggerChestConfig.isExpanded()) return;
 
         CompoundTag data = ((Entity) (Object) this).getPersistentData();
-        int rows, cols;
-        if (data.contains(ROWS_KEY)) {
-            rows = data.getInt(ROWS_KEY);
-            cols = data.getInt(COLS_KEY);
-        } else {
-            int[] size = LootrBiggerChestConfig.pickMinecartSize();
-            rows = size[0];
-            cols = size[1];
-            data.putInt(ROWS_KEY, rows);
-            data.putInt(COLS_KEY, cols);
-        }
+        int[] size = LootrBiggerChest.resolveOrCreateSize(data, LootrBiggerChestConfig::pickMinecartSize);
+        int rows = size[0], cols = size[1];
 
         if (playerInventoryIn.player instanceof ServerPlayer sp) {
             LootrBiggerChest.sendMenuSize(sp, id, rows, cols);
@@ -81,20 +58,12 @@ public class LootrChestMinecartEntityMixin {
     @Inject(method = "addAdditionalSaveData", at = @At("TAIL"))
     private void onAddAdditionalSaveData(CompoundTag tag, CallbackInfo ci) {
         if (!LootrBiggerChestConfig.isExpanded()) return;
-        CompoundTag data = ((Entity) (Object) this).getPersistentData();
-        if (data.contains(ROWS_KEY)) {
-            tag.putInt(ROWS_KEY, data.getInt(ROWS_KEY));
-            tag.putInt(COLS_KEY, data.getInt(COLS_KEY));
-        }
+        LootrBiggerChest.saveSizeToTag(((Entity) (Object) this).getPersistentData(), tag);
     }
 
     @Inject(method = "readAdditionalSaveData", at = @At("HEAD"))
     private void onReadAdditionalSaveData(CompoundTag tag, CallbackInfo ci) {
         if (!LootrBiggerChestConfig.isExpanded()) return;
-        if (tag.contains(ROWS_KEY)) {
-            CompoundTag data = ((Entity) (Object) this).getPersistentData();
-            data.putInt(ROWS_KEY, tag.getInt(ROWS_KEY));
-            data.putInt(COLS_KEY, tag.getInt(COLS_KEY));
-        }
+        LootrBiggerChest.loadSizeFromTag(tag, ((Entity) (Object) this).getPersistentData());
     }
 }

@@ -3,7 +3,7 @@
     "minVersion": "0.8",
     "package": "com.lootrbiggerchest.mixin",
     "compatibilityLevel": "JAVA_17",
-    "refmap": "lootrbigchest.refmap.json",
+    "refmap": "lootrbiggerchest.refmap.json",
     "mixins": [
         "ChestBlockEntityMixin",
         "LootrBarrelBlockEntityMixin",

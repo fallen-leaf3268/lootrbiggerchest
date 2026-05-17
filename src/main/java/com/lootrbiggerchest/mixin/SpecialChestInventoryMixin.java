@@ -4,7 +4,6 @@ import com.lootrbiggerchest.LootrBiggerChest;
 import com.lootrbiggerchest.LootrBiggerChestConfig;
 import com.lootrbiggerchest.menu.LootrBiggerChestMenu;
 import com.lootrbiggerchest.menu.LootrBiggerChestMenu.ContainerType;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -20,11 +19,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.Iterator;
+
 @Mixin(value = SpecialChestInventory.class)
 public class SpecialChestInventoryMixin {
-
-    private static final String ROWS_KEY = "LBCRows";
-    private static final String COLS_KEY = "LBCCols";
 
     @Inject(method = "createMenu", at = @At("HEAD"))
     private void beforeCreateMenu(int id, Inventory inventory, Player player,
@@ -36,60 +34,17 @@ public class SpecialChestInventoryMixin {
         BaseContainerBlockEntity tile = self.getTile(level);
         int rows, cols;
 
-        if (tile instanceof LootrBarrelBlockEntity) {
-            CompoundTag data = tile.getPersistentData();
-            if (data.contains(ROWS_KEY)) {
-                rows = data.getInt(ROWS_KEY);
-                cols = data.getInt(COLS_KEY);
-            } else {
-                int[] size = LootrBiggerChestConfig.pickBarrelSize();
-                rows = size[0];
-                cols = size[1];
-                data.putInt(ROWS_KEY, rows);
-                data.putInt(COLS_KEY, cols);
-            }
-        } else if (tile instanceof LootrShulkerBlockEntity) {
-            CompoundTag data = tile.getPersistentData();
-            if (data.contains(ROWS_KEY)) {
-                rows = data.getInt(ROWS_KEY);
-                cols = data.getInt(COLS_KEY);
-            } else {
-                int[] size = LootrBiggerChestConfig.pickShulkerSize();
-                rows = size[0];
-                cols = size[1];
-                data.putInt(ROWS_KEY, rows);
-                data.putInt(COLS_KEY, cols);
-            }
-        } else if (tile != null) {
-            CompoundTag data = tile.getPersistentData();
-            if (data.contains(ROWS_KEY)) {
-                rows = data.getInt(ROWS_KEY);
-                cols = data.getInt(COLS_KEY);
-            } else {
-                int[] size = LootrBiggerChestConfig.pickChestSize();
-                rows = size[0];
-                cols = size[1];
-                data.putInt(ROWS_KEY, rows);
-                data.putInt(COLS_KEY, cols);
-            }
+        if (tile != null) {
+            int[] size = LootrBiggerChest.getOrCreateSize(tile, null);
+            rows = size[0]; cols = size[1];
         } else {
             LootrChestMinecartEntity entity = self.getEntity(level);
             if (entity != null) {
-                CompoundTag data = entity.getPersistentData();
-                if (data.contains(ROWS_KEY)) {
-                    rows = data.getInt(ROWS_KEY);
-                    cols = data.getInt(COLS_KEY);
-                } else {
-                    int[] size = LootrBiggerChestConfig.pickMinecartSize();
-                    rows = size[0];
-                    cols = size[1];
-                    data.putInt(ROWS_KEY, rows);
-                    data.putInt(COLS_KEY, cols);
-                }
+                int[] size = LootrBiggerChest.resolveOrCreateSize(entity.getPersistentData(), LootrBiggerChestConfig::pickMinecartSize);
+                rows = size[0]; cols = size[1];
             } else {
                 int[] size = LootrBiggerChestConfig.pickMinecartSize();
-                rows = size[0];
-                cols = size[1];
+                rows = size[0]; cols = size[1];
             }
         }
 
@@ -99,8 +54,11 @@ public class SpecialChestInventoryMixin {
             self.resizeInventory(newSize);
         }
 
-        LootrBiggerChest.PENDING_MENU_SIZE.remove();
-        LootrBiggerChest.PENDING_MENU_SIZE.set(new int[]{rows, cols});
+        if (LootrBiggerChest.PENDING_MENU_SIZES.size() > 100) {
+            Iterator<Integer> it = LootrBiggerChest.PENDING_MENU_SIZES.keySet().iterator();
+            for (int i = 0; i < 25 && it.hasNext(); i++) { it.next(); it.remove(); }
+        }
+        LootrBiggerChest.PENDING_MENU_SIZES.put(id, new int[]{rows, cols});
 
         if (player instanceof ServerPlayer sp) {
             LootrBiggerChest.sendMenuSize(sp, id, rows, cols);
@@ -120,30 +78,25 @@ public class SpecialChestInventoryMixin {
 
         if (tile instanceof LootrBarrelBlockEntity) {
             ct = ContainerType.BARREL;
-            CompoundTag data = tile.getPersistentData();
-            rows = data.getInt(ROWS_KEY);
-            cols = data.getInt(COLS_KEY);
         } else if (tile instanceof LootrShulkerBlockEntity) {
             ct = ContainerType.SHULKER;
-            CompoundTag data = tile.getPersistentData();
-            rows = data.getInt(ROWS_KEY);
-            cols = data.getInt(COLS_KEY);
         } else if (tile != null) {
             ct = ContainerType.CHEST;
-            CompoundTag data = tile.getPersistentData();
-            rows = data.getInt(ROWS_KEY);
-            cols = data.getInt(COLS_KEY);
         } else {
             ct = ContainerType.MINECART;
+        }
+
+        if (ct != ContainerType.MINECART) {
+            int[] size = LootrBiggerChest.getOrCreateSize(tile, null);
+            rows = size[0]; cols = size[1];
+        } else {
             LootrChestMinecartEntity entity = self.getEntity(level);
             if (entity != null) {
-                CompoundTag data = entity.getPersistentData();
-                rows = data.getInt(ROWS_KEY);
-                cols = data.getInt(COLS_KEY);
+                int[] size = LootrBiggerChest.resolveOrCreateSize(entity.getPersistentData(), LootrBiggerChestConfig::pickMinecartSize);
+                rows = size[0]; cols = size[1];
             } else {
                 int[] size = LootrBiggerChestConfig.pickMinecartSize();
-                rows = size[0];
-                cols = size[1];
+                rows = size[0]; cols = size[1];
             }
         }
 

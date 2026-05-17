@@ -59,39 +59,28 @@ public class LootrBiggerChestMenu extends AbstractContainerMenu {
         this(type, containerId, playerInv, new SimpleContainer(rows * cols), rows, cols, ct);
     }
 
-    public LootrBiggerChestMenu(int containerId, Inventory playerInv, ContainerType ct) {
-        this(LootrBiggerChest.getMenu(ct), containerId, playerInv,
-                new SimpleContainer(getRows(ct) * getCols(ct)), getRows(ct), getCols(ct), ct);
-    }
-
     @SuppressWarnings("resource")
     public static LootrBiggerChestMenu fromNetwork(int id, Inventory inv, FriendlyByteBuf data, ContainerType ct) {
         MenuType<LootrBiggerChestMenu> type = LootrBiggerChest.getMenu(ct);
-        try {
-            int[] pending = LootrBiggerChest.PENDING_MENU_SIZE.get();
-            if (pending != null) {
-                int rows = pending[0];
-                int cols = pending[1];
-                data.writeInt(rows);
-                data.writeInt(cols);
-                return new LootrBiggerChestMenu(type, id, inv, new SimpleContainer(rows * cols), rows, cols, ct);
-            }
-            if (data != null && data.readableBytes() >= 8) {
-                int rows = data.readInt();
-                int cols = data.readInt();
-                return new LootrBiggerChestMenu(type, id, inv, new SimpleContainer(rows * cols), rows, cols, ct);
-            }
-            int[] clientSize = LootrBiggerChest.CLIENT_SIZES.remove(Integer.valueOf(id));
-            if (clientSize != null) {
-                return new LootrBiggerChestMenu(type, id, inv,
-                        new SimpleContainer(clientSize[0] * clientSize[1]), clientSize[0], clientSize[1], ct);
-            }
-            int rows = getRows(ct);
-            int cols = getCols(ct);
+        int[] pending = LootrBiggerChest.PENDING_MENU_SIZES.remove(Integer.valueOf(id));
+        if (pending != null) {
+            int rows = pending[0];
+            int cols = pending[1];
             return new LootrBiggerChestMenu(type, id, inv, new SimpleContainer(rows * cols), rows, cols, ct);
-        } finally {
-            LootrBiggerChest.PENDING_MENU_SIZE.remove();
         }
+        if (data != null && data.readableBytes() >= 8) {
+            int rows = data.readInt();
+            int cols = data.readInt();
+            return new LootrBiggerChestMenu(type, id, inv, new SimpleContainer(rows * cols), rows, cols, ct);
+        }
+        int[] clientSize = LootrBiggerChest.CLIENT_SIZES.remove(Integer.valueOf(id));
+        if (clientSize != null) {
+            return new LootrBiggerChestMenu(type, id, inv,
+                    new SimpleContainer(clientSize[0] * clientSize[1]), clientSize[0], clientSize[1], ct);
+        }
+        int rows = getRows(ct);
+        int cols = getCols(ct);
+        return new LootrBiggerChestMenu(type, id, inv, new SimpleContainer(rows * cols), rows, cols, ct);
     }
 
     private static int getRows(ContainerType ct) {

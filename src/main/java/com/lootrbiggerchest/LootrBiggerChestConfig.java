@@ -76,11 +76,6 @@ public class LootrBiggerChestConfig {
     public static int getMinecartRows() { return COMMON.minecartRows.get(); }
     public static int getMinecartColumns() { return COMMON.minecartColumns.get(); }
 
-    public static int getChestSlots() { return getChestRows() * getChestColumns(); }
-    public static int getBarrelSlots() { return getBarrelRows() * getBarrelColumns(); }
-    public static int getShulkerSlots() { return getShulkerRows() * getShulkerColumns(); }
-    public static int getMinecartSlots() { return getMinecartRows() * getMinecartColumns(); }
-
     public static boolean isExpanded() {
         return getChestRows() != 3 || getChestColumns() != 9
                 || getBarrelRows() != 3 || getBarrelColumns() != 9
@@ -144,15 +139,4 @@ public class LootrBiggerChestConfig {
         return pickFromPool(COMMON.minecartRandomSizes.get(), getMinecartRows(), getMinecartColumns());
     }
 
-    public static final String RANDOM_KEY = "LBCIsRandom";
-
-    public static boolean hasChestRandom() { return !COMMON.chestRandomSizes.get().isEmpty(); }
-    public static boolean hasBarrelRandom() { return !COMMON.barrelRandomSizes.get().isEmpty(); }
-    public static boolean hasShulkerRandom() { return !COMMON.shulkerRandomSizes.get().isEmpty(); }
-    public static boolean hasMinecartRandom() { return !COMMON.minecartRandomSizes.get().isEmpty(); }
-
-    public static int maxSlotCount() {
-        return Math.max(Math.max(getChestSlots(), getBarrelSlots()),
-                Math.max(getShulkerSlots(), getMinecartSlots()));
-    }
 }
