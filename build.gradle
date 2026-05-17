@@ -1,6 +1,7 @@
 plugins {
     id 'net.minecraftforge.gradle' version '[6.0,6.2)'
     id 'org.spongepowered.mixin' version '0.7.+'
+    id 'me.modmuss50.mod-publish-plugin' version '0.8.0'
 }
 
 version = mod_version
@@ -102,4 +103,18 @@ jar {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
+}
+
+publishMods {
+    file = jar.archiveFile
+    changelog = file("CHANGELOG.md").exists() ? file("CHANGELOG.md").text : "See GitHub release for changes."
+    type = RELEASE
+    modLoaders.add("forge")
+
+    modrinth {
+        accessToken = providers.environmentVariable("MODRINTH_TOKEN")
+        projectId = "gqo4exdM"
+        minecraftVersions.add("1.20.1")
+        requires("lootr")
+    }
 }
