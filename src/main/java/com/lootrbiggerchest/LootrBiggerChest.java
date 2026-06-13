@@ -1,9 +1,7 @@
 package com.lootrbiggerchest;
 
-import com.lootrbiggerchest.client.LootrBiggerChestScreen;
 import com.lootrbiggerchest.menu.LootrBiggerChestMenu;
 import com.lootrbiggerchest.menu.LootrBiggerChestMenu.ContainerType;
-import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -36,6 +34,7 @@ import java.util.function.Supplier;
 public class LootrBiggerChest {
 
     public static final String MOD_ID = "lootrbiggerchest";
+    public static com.lootrbiggerchest.proxy.IProxy PROXY;
 
     private static final DeferredRegister<MenuType<?>> MENU_TYPES =
             DeferredRegister.create(ForgeRegistries.MENU_TYPES, MOD_ID);
@@ -72,6 +71,9 @@ public class LootrBiggerChest {
     public static final ConcurrentHashMap<Integer, int[]> CLIENT_SIZES = new ConcurrentHashMap<>();
 
     public LootrBiggerChest() {
+        PROXY = net.minecraftforge.fml.DistExecutor.safeRunForDist(
+            () -> com.lootrbiggerchest.proxy.ClientProxy::new,
+            () -> com.lootrbiggerchest.proxy.ServerProxy::new);
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, LootrBiggerChestConfig.COMMON_SPEC);
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         MENU_TYPES.register(modBus);
@@ -83,13 +85,8 @@ public class LootrBiggerChest {
                 SyncSizePacket::handle);
     }
 
-    private void onClientSetup(FMLClientSetupEvent event) {
-        event.enqueueWork(() -> {
-            MenuScreens.register(CHEST_MENU.get(), LootrBiggerChestScreen::new);
-            MenuScreens.register(BARREL_MENU.get(), LootrBiggerChestScreen::new);
-            MenuScreens.register(SHULKER_MENU.get(), LootrBiggerChestScreen::new);
-            MenuScreens.register(MINECART_MENU.get(), LootrBiggerChestScreen::new);
-        });
+    private void onClientSetup(net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent event) {
+        event.enqueueWork(() -> PROXY.registerScreens());
     }
 
     public static void sendMenuSize(ServerPlayer player, int containerId, int rows, int cols) {
