@@ -4,3 +4,5 @@ build/
 *.log
 bin/
 *.zip
+/docs/
+/src/test/
