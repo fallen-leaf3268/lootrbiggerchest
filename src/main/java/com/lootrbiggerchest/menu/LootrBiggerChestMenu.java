@@ -53,67 +53,47 @@ public class LootrBiggerChestMenu extends AbstractContainerMenu {
         for (int col = 0; col < 9; col++) {
             this.addSlot(new Slot(playerInv, col, playerInvX + col * 18, hotbarY));
         }
+        if (playerInv.player != null) this.container.startOpen(playerInv.player);
     }
 
     public LootrBiggerChestMenu(MenuType<?> type, int containerId, Inventory playerInv, int rows, int cols, ContainerType ct) {
         this(type, containerId, playerInv, new SimpleContainer(rows * cols), rows, cols, ct);
     }
 
-    public LootrBiggerChestMenu(int containerId, Inventory playerInv, ContainerType ct) {
-        this(LootrBiggerChest.getMenu(ct), containerId, playerInv,
-                new SimpleContainer(getRows(ct) * getCols(ct)), getRows(ct), getCols(ct), ct);
-    }
-
-    @SuppressWarnings("resource")
     public static LootrBiggerChestMenu fromNetwork(int id, Inventory inv, FriendlyByteBuf data, ContainerType ct) {
-        MenuType<LootrBiggerChestMenu> type = LootrBiggerChest.getMenu(ct);
-        try {
-            int[] pending = LootrBiggerChest.PENDING_MENU_SIZE.get();
-            if (pending != null) {
-                int rows = pending[0];
-                int cols = pending[1];
-                data.writeInt(rows);
-                data.writeInt(cols);
-                return new LootrBiggerChestMenu(type, id, inv, new SimpleContainer(rows * cols), rows, cols, ct);
-            }
-            if (data != null && data.readableBytes() >= 8) {
-                int rows = data.readInt();
-                int cols = data.readInt();
-                return new LootrBiggerChestMenu(type, id, inv, new SimpleContainer(rows * cols), rows, cols, ct);
-            }
-            int[] clientSize = LootrBiggerChest.CLIENT_SIZES.remove(Integer.valueOf(id));
-            if (clientSize != null) {
-                return new LootrBiggerChestMenu(type, id, inv,
-                        new SimpleContainer(clientSize[0] * clientSize[1]), clientSize[0], clientSize[1], ct);
-            }
-            int rows = getRows(ct);
-            int cols = getCols(ct);
-            return new LootrBiggerChestMenu(type, id, inv, new SimpleContainer(rows * cols), rows, cols, ct);
-        } finally {
-            LootrBiggerChest.PENDING_MENU_SIZE.remove();
+        if (data == null || data.readableBytes() < Integer.BYTES * 2 + 1) {
+            throw invalidOpeningData(id, ct, "missing authoritative extra data");
         }
+        ContainerType receivedType;
+        int rows;
+        int cols;
+        try {
+            receivedType = data.readEnum(ContainerType.class);
+            rows = data.readInt();
+            cols = data.readInt();
+        } catch (RuntimeException exception) {
+            throw invalidOpeningData(id, ct, "malformed authoritative extra data");
+        }
+        if (receivedType != ct || !LootrBiggerChestConfig.isValidSize(rows, cols)) {
+            throw invalidOpeningData(id, ct,
+                    "received " + receivedType + " " + rows + "x" + cols);
+        }
+        int slots = Math.multiplyExact(rows, cols);
+        LootrBiggerChestMenu menu = new LootrBiggerChestMenu(
+                LootrBiggerChest.getMenu(ct), id, inv,
+                new SimpleContainer(slots), rows, cols, ct);
+        return menu;
     }
 
-    private static int getRows(ContainerType ct) {
-        return switch (ct) {
-            case CHEST -> LootrBiggerChestConfig.getChestRows();
-            case BARREL -> LootrBiggerChestConfig.getBarrelRows();
-            case SHULKER -> LootrBiggerChestConfig.getShulkerRows();
-            case MINECART -> LootrBiggerChestConfig.getMinecartRows();
-        };
-    }
-
-    private static int getCols(ContainerType ct) {
-        return switch (ct) {
-            case CHEST -> LootrBiggerChestConfig.getChestColumns();
-            case BARREL -> LootrBiggerChestConfig.getBarrelColumns();
-            case SHULKER -> LootrBiggerChestConfig.getShulkerColumns();
-            case MINECART -> LootrBiggerChestConfig.getMinecartColumns();
-        };
+    private static IllegalStateException invalidOpeningData(int id, ContainerType type,
+                                                            String reason) {
+        LootrBiggerChest.LOGGER.error("Aborting {} menu {}: {}", type, id, reason);
+        return new IllegalStateException("Cannot safely open " + type + " menu " + id + ": " + reason);
     }
 
     @Override
     public ItemStack quickMoveStack(Player player, int slotIndex) {
+        if (slotIndex < 0 || slotIndex >= this.slots.size()) return ItemStack.EMPTY;
         ItemStack moved = ItemStack.EMPTY;
         Slot slot = this.slots.get(slotIndex);
         if (slot != null && slot.hasItem()) {
