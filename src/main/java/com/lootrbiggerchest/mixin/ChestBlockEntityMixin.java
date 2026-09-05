@@ -1,7 +1,7 @@
 package com.lootrbiggerchest.mixin;
 
 import com.lootrbiggerchest.LootrBiggerChest;
-import com.lootrbiggerchest.LootrBiggerChestConfig;
+import com.lootrbiggerchest.menu.LootrBiggerChestMenu.ContainerType;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
@@ -23,25 +23,41 @@ public class ChestBlockEntityMixin {
 
     @Inject(method = "getContainerSize", at = @At("HEAD"), cancellable = true)
     private void modifyChestSize(CallbackInfoReturnable<Integer> cir) {
-        if (!((Object) this instanceof LootrChestBlockEntity) || !LootrBiggerChestConfig.isExpanded()) return;
-        CompoundTag data = ((BlockEntity) (Object) this).getPersistentData();
-        int[] size = LootrBiggerChest.resolveOrCreateSize(data, LootrBiggerChestConfig::pickChestSize);
-        int totalSize = size[0] * size[1];
-        if (items.size() != totalSize) {
-            items = NonNullList.withSize(totalSize, ItemStack.EMPTY);
-        }
-        cir.setReturnValue(totalSize);
+        if (!((Object) this instanceof LootrChestBlockEntity)) return;
+        BlockEntity blockEntity = (BlockEntity) (Object) this;
+        CompoundTag data = blockEntity.getPersistentData();
+        if (!LootrBiggerChest.shouldManage(data, ContainerType.CHEST)) return;
+        LootrBiggerChest.ContainerStorageState before =
+                LootrBiggerChest.captureStorageState(data, items);
+        int[] size = LootrBiggerChest.resolveOrCreateSize(data, ContainerType.CHEST);
+        LootrBiggerChest.ResizedContainer resized = LootrBiggerChest.reconcileSizeWithItems(
+                data, size, items, "Lootr chest");
+        items = resized.items();
+        LootrBiggerChest.setChangedIfServer(blockEntity,
+                LootrBiggerChest.storageStateChanged(before, data, items));
+        cir.setReturnValue(resized.containerSize());
     }
 
     @Inject(method = "saveAdditional", at = @At("TAIL"))
     private void onSaveAdditional(CompoundTag tag, CallbackInfo ci) {
-        if (!((Object) this instanceof LootrChestBlockEntity) || !LootrBiggerChestConfig.isExpanded()) return;
+        if (!((Object) this instanceof LootrChestBlockEntity)) return;
         LootrBiggerChest.saveSizeToTag(((BlockEntity) (Object) this).getPersistentData(), tag);
+        if (LootrBiggerChest.hasSerializedItems(tag) || LootrBiggerChest.hasOccupiedItems(items)) {
+            LootrBiggerChest.saveAllItemsWithIntSlots(tag, items);
+        }
     }
 
-    @Inject(method = "load", at = @At("HEAD"))
-    private void onLoad(CompoundTag tag, CallbackInfo ci) {
-        if (!((Object) this instanceof LootrChestBlockEntity) || !LootrBiggerChestConfig.isExpanded()) return;
-        LootrBiggerChest.loadSizeFromTag(tag, ((BlockEntity) (Object) this).getPersistentData());
+    @Inject(method = "load", at = @At("TAIL"))
+    private void afterLoad(CompoundTag tag, CallbackInfo ci) {
+        if (!((Object) this instanceof LootrChestBlockEntity)) return;
+        BlockEntity blockEntity = (BlockEntity) (Object) this;
+        CompoundTag data = blockEntity.getPersistentData();
+        LootrBiggerChest.loadSizeFromTag(tag, data);
+        int required = LootrBiggerChest.requiredSlotsFromItems(tag, "Lootr chest");
+        int loadedSlots = LootrBiggerChest.loadedContainerSlots(data, items.size(), required);
+        items = LootrBiggerChest.resizeItemsSafely(items, loadedSlots, "Lootr chest");
+        if (LootrBiggerChest.hasSerializedItems(tag)) {
+            LootrBiggerChest.loadAllItemsWithIntSlots(tag, items, "Lootr chest");
+        }
     }
 }

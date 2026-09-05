@@ -1,3 +1,5 @@
+import me.modmuss50.mpp.ReleaseType
+
 plugins {
     id 'net.minecraftforge.gradle' version '[6.0,6.2)'
     id 'org.spongepowered.mixin' version '0.7.+'
@@ -22,11 +24,20 @@ mixin {
     config "${mod_id}.mixins.json"
 }
 
+repositories {
+    mavenCentral()
+    flatDir {
+        dirs 'libs'
+    }
+}
+
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
-    compileOnly fg.deobf(files("libs/lootr-forge-1.20-0.7.35.94.jar"))
+    compileOnly fg.deobf('local:lootr-forge:1.20-0.7.35.94')
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testRuntimeOnly fg.deobf('local:lootr-forge:1.20-0.7.35.94')
 }
 
 task('patchRefmap') {
@@ -48,11 +59,13 @@ task('patchRefmap') {
             'itemStacks': 'Lnet/minecraft/world/level/block/entity/ShulkerBoxBlockEntity;f_59645_'
         ]
         refmap.mappings.'com/lootrbiggerchest/mixin/SpecialChestInventoryMixin' = [
-            'createMenu': 'Lnoobanidus/mods/lootr/data/SpecialChestInventory;m_7208_(ILnet/minecraft/world/entity/player/Inventory;Lnet/minecraft/world/entity/player/Player;)Lnet/minecraft/world/inventory/AbstractContainerMenu;'
+            'createMenu(ILnet/minecraft/world/entity/player/Inventory;Lnet/minecraft/world/entity/player/Player;)Lnet/minecraft/world/inventory/AbstractContainerMenu;': 'Lnoobanidus/mods/lootr/data/SpecialChestInventory;m_7208_(ILnet/minecraft/world/entity/player/Inventory;Lnet/minecraft/world/entity/player/Player;)Lnet/minecraft/world/inventory/AbstractContainerMenu;'
+        ]
+        refmap.data.searge.'com/lootrbiggerchest/mixin/SpecialChestInventoryMixin' = [
+            'createMenu(ILnet/minecraft/world/entity/player/Inventory;Lnet/minecraft/world/entity/player/Player;)Lnet/minecraft/world/inventory/AbstractContainerMenu;': 'Lnoobanidus/mods/lootr/data/SpecialChestInventory;m_7208_(ILnet/minecraft/world/entity/player/Inventory;Lnet/minecraft/world/entity/player/Player;)Lnet/minecraft/world/inventory/AbstractContainerMenu;'
         ]
         refmap.mappings.'com/lootrbiggerchest/mixin/LootrChestMinecartEntityMixin' = [
             'getContainerSize': 'Lnoobanidus/mods/lootr/entity/LootrChestMinecartEntity;m_6643_()I',
-            'createMenu': 'Lnoobanidus/mods/lootr/entity/LootrChestMinecartEntity;m_7402_(ILnet/minecraft/world/entity/player/Inventory;)Lnet/minecraft/world/inventory/AbstractContainerMenu;',
             'addAdditionalSaveData': 'Lnoobanidus/mods/lootr/entity/LootrChestMinecartEntity;m_7380_(Lnet/minecraft/nbt/CompoundTag;)V',
             'readAdditionalSaveData': 'Lnoobanidus/mods/lootr/entity/LootrChestMinecartEntity;m_7378_(Lnet/minecraft/nbt/CompoundTag;)V'
         ]
@@ -64,6 +77,9 @@ task('patchRefmap') {
             'saveAdditional': 'Lnet/minecraft/world/level/block/entity/ChestBlockEntity;m_183515_(Lnet/minecraft/nbt/CompoundTag;)V',
             'load': 'Lnet/minecraft/world/level/block/entity/ChestBlockEntity;m_142466_(Lnet/minecraft/nbt/CompoundTag;)V',
             'items': 'Lnet/minecraft/world/level/block/entity/ChestBlockEntity;f_59073_'
+        ]
+        refmap.data.searge.'com/lootrbiggerchest/mixin/AbstractMinecartContainerAccessor' = [
+            'itemStacks': 'f_38202_:Lnet/minecraft/core/NonNullList;'
         ]
         refmapFile.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(refmap))
         def copyFile = layout.buildDirectory.file("tmp/compileJava/${mod_id}.refmap.json").get().asFile
@@ -105,10 +121,14 @@ tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
 
+tasks.named('test', Test).configure {
+    useJUnitPlatform()
+}
+
 publishMods {
     file = jar.archiveFile
     changelog = file("CHANGELOG.md").exists() ? file("CHANGELOG.md").text : "See GitHub release for changes."
-    type = RELEASE
+    type = ReleaseType.STABLE
     modLoaders.add("forge")
 
     modrinth {

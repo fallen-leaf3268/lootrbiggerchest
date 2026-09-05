@@ -10,6 +10,7 @@
         "LootrShulkerBlockEntityMixin",
         "LootrChestMinecartEntityMixin",
         "SpecialChestInventoryMixin",
+        "ServerPlayerMenuMixin",
         "ChestDataMixin",
         "AbstractMinecartContainerAccessor"
     ],
