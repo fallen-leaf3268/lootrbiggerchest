@@ -6,7 +6,9 @@
     "refmap": "lootrbiggerchest.refmap.json",
     "mixins": [
         "ChestBlockEntityMixin",
+        "LootrChestOpenersCounterMixin",
         "LootrBarrelBlockEntityMixin",
+        "LootrBarrelOpenersCounterMixin",
         "LootrShulkerBlockEntityMixin",
         "LootrChestMinecartEntityMixin",
         "SpecialChestInventoryMixin",
