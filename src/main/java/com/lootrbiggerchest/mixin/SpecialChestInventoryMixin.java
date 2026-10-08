@@ -40,6 +40,9 @@ public class SpecialChestInventoryMixin implements LootrBiggerChest.Authoritativ
     @Unique
     private LootrBiggerChest.PlayerContainerSize lootrbiggerchest$storedSize;
 
+    @Unique
+    private boolean lootrbiggerchest$legacyIntSlots;
+
     @Shadow(remap = false)
     private NonNullList<ItemStack> contents;
 
@@ -102,8 +105,16 @@ public class SpecialChestInventoryMixin implements LootrBiggerChest.Authoritativ
                 lootrbiggerchest$chestData("restore", "none");
         int oldContentsSize = contents.size();
         int oldGlobalSize = chestData.lootrbiggerchest$getSize();
+        int allocationBaseline = savedSlots > 0 ? savedSlots
+                : Math.max(oldContentsSize, oldGlobalSize);
+        int legacySize = LootrBiggerChest.readLegacyIntInventorySize(tag, allocationBaseline);
+        boolean legacyIntSlots = legacySize > 0 || LootrBiggerChest.hasHighIntSlotItems(tag);
         LootrBiggerChest.PlayerContainerSize stored =
                 LootrBiggerChest.readStoredInventorySize(tag);
+        if (chestData.lootrbiggerchest$isCustom()) {
+            if (contents.size() > LootrBiggerChest.MAX_SLOTS) stored = null;
+            if (stored == null && !legacyIntSlots) return;
+        }
         if (stored != null) {
             int requiredSlots = LootrBiggerChest.requiredSlotsFromItems(
                     tag, "Lootr player inventory");
@@ -115,27 +126,25 @@ public class SpecialChestInventoryMixin implements LootrBiggerChest.Authoritativ
             chestData.lootrbiggerchest$growSize(safeStored.slots());
             boolean dirty = oldContentsSize != contents.size()
                     || !safeStored.equals(stored)
-                    || LootrBiggerChest.itemsNeedNormalization(tag, contents.size());
+                    || LootrBiggerChest.itemsNeedNormalization(tag, contents, LootrBiggerChest.MAX_SLOTS);
             if (dirty) newChestData.setDirty();
             return;
         }
-        int allocationBaseline = savedSlots > 0 ? savedSlots
-                : Math.max(oldContentsSize, oldGlobalSize);
+        if (!legacyIntSlots) return;
+        int maximumSlots = Math.max(allocationBaseline, LootrBiggerChest.MAX_SLOTS);
+        if (legacySize > 0) allocationBaseline = legacySize;
         int required = Math.max(LootrBiggerChest.requiredSlotsFromItems(
-                tag, "Lootr player inventory"), allocationBaseline);
+                tag, "Lootr player inventory", maximumSlots), allocationBaseline);
         int exactSize = required;
         contents = LootrBiggerChest.resizeItemsSafely(
                 contents, exactSize, "Lootr player inventory");
-        if (exactSize > oldGlobalSize) {
-            chestData.lootrbiggerchest$growSize(exactSize);
-        }
-        boolean normalizeItems = LootrBiggerChest.itemsNeedNormalization(tag, exactSize);
+        lootrbiggerchest$legacyIntSlots = true;
         boolean loadedItems = LootrBiggerChest.hasSerializedItems(tag);
         if (loadedItems) {
-            LootrBiggerChest.loadAllItemsWithIntSlots(tag, contents, "Lootr player inventory");
+            LootrBiggerChest.loadAllItemsWithIntSlots(tag, contents, "Lootr player inventory", maximumSlots);
         }
-        boolean dirty = normalizeItems || oldContentsSize != contents.size()
-                || oldGlobalSize != chestData.lootrbiggerchest$getSize();
+        boolean normalizeItems = LootrBiggerChest.itemsNeedNormalization(tag, contents, maximumSlots);
+        boolean dirty = normalizeItems || oldContentsSize != contents.size();
         if (dirty) newChestData.setDirty();
     }
 
@@ -146,11 +155,17 @@ public class SpecialChestInventoryMixin implements LootrBiggerChest.Authoritativ
         if (menuBuilder != null) return null;
         LootrBiggerChest.ChestDataAccess chestData =
                 lootrbiggerchest$chestData("prepare_menu", player.getUUID());
-        if (chestData.lootrbiggerchest$isCustom()) return null;
+        if (chestData.lootrbiggerchest$isCustom()) {
+            if (lootrbiggerchest$storedSize == null) return null;
+            return new LootrBiggerChest.AuthoritativeMenuSpec(
+                    ContainerType.CHEST, lootrbiggerchest$storedSize.rows(),
+                    lootrbiggerchest$storedSize.columns());
+        }
         Level level = player.level();
         ContainerType type = LootrBiggerChest.resolveContainerType(newChestData, level);
 
         if (type == null) {
+            if (lootrbiggerchest$storedSize == null) return null;
             LootrBiggerChest.LOGGER.error(
                     "lootr_type_unresolved player={} tile={} contentsSize={}",
                     player.getUUID(), self.getTileId(), contents.size());
@@ -233,11 +248,18 @@ public class SpecialChestInventoryMixin implements LootrBiggerChest.Authoritativ
     @Inject(method = "writeItems()Lnet/minecraft/nbt/CompoundTag;",
             at = @At("HEAD"), cancellable = true, remap = false)
     private void writeIntSlotItems(CallbackInfoReturnable<CompoundTag> cir) {
+        if (lootrbiggerchest$storedSize == null && !lootrbiggerchest$legacyIntSlots) return;
+        boolean custom = lootrbiggerchest$chestData("write", "none").lootrbiggerchest$isCustom();
+        int maximumSlots = lootrbiggerchest$storedSize == null || custom
+                ? contents.size() : LootrBiggerChest.MAX_SLOTS;
         CompoundTag result = LootrBiggerChest.saveAllItemsWithIntSlots(
-                new CompoundTag(), contents);
+                new CompoundTag(), contents, maximumSlots);
         if (lootrbiggerchest$storedSize != null) {
             result.putInt(LootrBiggerChest.ROWS_KEY, lootrbiggerchest$storedSize.rows());
             result.putInt(LootrBiggerChest.COLS_KEY, lootrbiggerchest$storedSize.columns());
+        }
+        if (lootrbiggerchest$storedSize == null || custom && contents.size() > LootrBiggerChest.MAX_SLOTS) {
+            result.putInt(LootrBiggerChest.INT_INVENTORY_SIZE_KEY, contents.size());
         }
         cir.setReturnValue(result);
     }

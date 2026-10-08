@@ -8,12 +8,14 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
+import net.minecraftforge.server.ServerLifecycleHooks;
 import noobanidus.mods.lootr.api.LootFiller;
 import noobanidus.mods.lootr.data.ChestData;
 import noobanidus.mods.lootr.data.SpecialChestInventory;
@@ -48,6 +50,15 @@ public abstract class ChestDataMixin implements LootrBiggerChest.ChestDataAccess
 
     @Unique
     private final Map<UUID, Object> lootrbiggerchest$pendingCreatedSources = new HashMap<>();
+
+    @Unique
+    private ListTag lootrbiggerchest$legacyCustomPlayerSizes;
+
+    @Unique
+    private boolean lootrbiggerchest$legacyCustomSize;
+
+    @Unique
+    private static final String lootrbiggerchest$LEGACY_CUSTOM_KEY = "LBCLegacyCustom";
 
     @Unique
     private static final ThreadLocal<ArrayDeque<Integer>> lootrbiggerchest$loadingSizes =
@@ -105,7 +116,31 @@ public abstract class ChestDataMixin implements LootrBiggerChest.ChestDataAccess
     @Override
     public void lootrbiggerchest$loadPlayerSizes(CompoundTag root) {
         lootrbiggerchest$playerSizes.clear();
-        lootrbiggerchest$playerSizes.putAll(LootrBiggerChest.readPlayerSizes(root));
+        lootrbiggerchest$legacyCustomPlayerSizes = null;
+        lootrbiggerchest$legacyCustomSize = false;
+        Map<UUID, LootrBiggerChest.PlayerContainerSize> savedSizes =
+                LootrBiggerChest.readPlayerSizes(root);
+        if (custom) {
+            lootrbiggerchest$legacyCustomSize = root.getBoolean(lootrbiggerchest$LEGACY_CUSTOM_KEY);
+            if (root.get(LootrBiggerChest.PLAYER_SIZES_KEY) instanceof ListTag legacySizes) {
+                lootrbiggerchest$legacyCustomPlayerSizes = legacySizes.copy();
+            }
+            if (!savedSizes.isEmpty()) {
+                lootrbiggerchest$legacyCustomSize = true;
+            }
+            ListTag inventories = root.getList("inventories", Tag.TAG_COMPOUND);
+            for (int index = 0; index < inventories.size(); index++) {
+                CompoundTag inventory = inventories.getCompound(index).getCompound("chest");
+                if (LootrBiggerChest.readStoredInventorySize(inventory) != null
+                        || LootrBiggerChest.readLegacyIntInventorySize(inventory, size) > 0
+                        || LootrBiggerChest.hasHighIntSlotItems(inventory)) {
+                    lootrbiggerchest$legacyCustomSize = true;
+                    break;
+                }
+            }
+            return;
+        }
+        lootrbiggerchest$playerSizes.putAll(savedSizes);
         for (LootrBiggerChest.PlayerContainerSize playerSize
                 : lootrbiggerchest$playerSizes.values()) {
             lootrbiggerchest$growSize(playerSize.slots());
@@ -114,6 +149,16 @@ public abstract class ChestDataMixin implements LootrBiggerChest.ChestDataAccess
 
     @Override
     public void lootrbiggerchest$savePlayerSizes(CompoundTag root) {
+        if (custom) {
+            if (lootrbiggerchest$legacyCustomPlayerSizes != null) {
+                root.put(LootrBiggerChest.PLAYER_SIZES_KEY,
+                        lootrbiggerchest$legacyCustomPlayerSizes.copy());
+            }
+            if (lootrbiggerchest$legacyCustomSize) {
+                root.putBoolean(lootrbiggerchest$LEGACY_CUSTOM_KEY, true);
+            }
+            return;
+        }
         LootrBiggerChest.writePlayerSizes(root, lootrbiggerchest$playerSizes);
     }
 
@@ -308,7 +353,9 @@ public abstract class ChestDataMixin implements LootrBiggerChest.ChestDataAccess
     private void reconcileExistingInventory(ServerPlayer player,
             CallbackInfoReturnable<SpecialChestInventory> cir) {
         SpecialChestInventory inventory = cir.getReturnValue();
-        if (inventory == null) return;
+        if (inventory == null || custom) return;
+        ChestData self = (ChestData) (Object) this;
+        if (LootrBiggerChest.resolveContainerType(self, player.level()) == null) return;
         LootrBiggerChest.SizedInventoryAccess sized =
                 (LootrBiggerChest.SizedInventoryAccess) inventory;
         LootrBiggerChest.PlayerContainerSize rootSize =
@@ -372,6 +419,11 @@ public abstract class ChestDataMixin implements LootrBiggerChest.ChestDataAccess
     @Inject(method = "setSize(I)V", at = @At("HEAD"), cancellable = true,
             remap = false, require = 0)
     private void onSetSize(int requestedSize, CallbackInfo ci) {
+        if (custom) {
+            if (lootrbiggerchest$legacyCustomSize && requestedSize < size) ci.cancel();
+            return;
+        }
+        if (!lootrbiggerchest$hasManagedSource()) return;
         if (!lootrbiggerchest$playerSizes.isEmpty()) {
             lootrbiggerchest$growSize(requestedSize);
             ci.cancel();
@@ -386,6 +438,16 @@ public abstract class ChestDataMixin implements LootrBiggerChest.ChestDataAccess
 
     @Inject(method = "setSize(I)V", at = @At("TAIL"), remap = false, require = 0)
     private void afterSetSize(int requestedSize, CallbackInfo ci) {
+        if (!lootrbiggerchest$hasManagedSource()) return;
         ((ChestData) (Object) this).setDirty();
+    }
+
+    @Unique
+    private boolean lootrbiggerchest$hasManagedSource() {
+        if (custom) return false;
+        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+        if (server == null) return false;
+        ChestData self = (ChestData) (Object) this;
+        return LootrBiggerChest.resolveContainerType(self, server.getLevel(self.getDimension())) != null;
     }
 }

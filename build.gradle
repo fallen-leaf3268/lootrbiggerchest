@@ -1,4 +1,5 @@
 import me.modmuss50.mpp.ReleaseType
+import me.modmuss50.mpp.PublishModTask
 
 plugins {
     id 'net.minecraftforge.gradle' version '[6.0,6.2)'
@@ -37,73 +38,79 @@ dependencies {
 
     compileOnly fg.deobf('local:lootr-forge:1.20-0.7.35.94')
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
-    testRuntimeOnly fg.deobf('local:lootr-forge:1.20-0.7.35.94')
+    testImplementation fg.deobf('local:lootr-forge:1.20-0.7.35.94')
 }
 
-task('patchRefmap') {
-    dependsOn compileJava
-    doLast {
-        def refmapFile = layout.buildDirectory.file('tmp/compileJava/compileJava-refmap.json').get().asFile
-        def refmap = new groovy.json.JsonSlurper().parse(refmapFile)
-
-        refmap.mappings.'com/lootrbiggerchest/mixin/LootrBarrelBlockEntityMixin' = [
+def manualRefmapMappings = [
+        'com/lootrbiggerchest/mixin/LootrBarrelBlockEntityMixin': [
             'getContainerSize': 'Lnoobanidus/mods/lootr/block/entities/LootrBarrelBlockEntity;m_6643_()I',
             'saveAdditional': 'Lnoobanidus/mods/lootr/block/entities/LootrBarrelBlockEntity;m_183515_(Lnet/minecraft/nbt/CompoundTag;)V',
-            'load': 'Lnoobanidus/mods/lootr/block/entities/LootrBarrelBlockEntity;m_142466_(Lnet/minecraft/nbt/CompoundTag;)V',
-            'items': 'Lnet/minecraft/world/level/block/entity/BarrelBlockEntity;f_58591_'
-        ]
-        refmap.mappings.'com/lootrbiggerchest/mixin/LootrShulkerBlockEntityMixin' = [
+            'load': 'Lnoobanidus/mods/lootr/block/entities/LootrBarrelBlockEntity;m_142466_(Lnet/minecraft/nbt/CompoundTag;)V'
+        ],
+        'com/lootrbiggerchest/mixin/LootrShulkerBlockEntityMixin': [
             'getContainerSize': 'Lnoobanidus/mods/lootr/block/entities/LootrShulkerBlockEntity;m_6643_()I',
             'saveAdditional': 'Lnoobanidus/mods/lootr/block/entities/LootrShulkerBlockEntity;m_183515_(Lnet/minecraft/nbt/CompoundTag;)V',
-            'load': 'Lnoobanidus/mods/lootr/block/entities/LootrShulkerBlockEntity;m_142466_(Lnet/minecraft/nbt/CompoundTag;)V',
-            'itemStacks': 'Lnet/minecraft/world/level/block/entity/ShulkerBoxBlockEntity;f_59645_'
-        ]
-        refmap.mappings.'com/lootrbiggerchest/mixin/SpecialChestInventoryMixin' = [
+            'load': 'Lnoobanidus/mods/lootr/block/entities/LootrShulkerBlockEntity;m_142466_(Lnet/minecraft/nbt/CompoundTag;)V'
+        ],
+        'com/lootrbiggerchest/mixin/SpecialChestInventoryMixin': [
             'createMenu(ILnet/minecraft/world/entity/player/Inventory;Lnet/minecraft/world/entity/player/Player;)Lnet/minecraft/world/inventory/AbstractContainerMenu;': 'Lnoobanidus/mods/lootr/data/SpecialChestInventory;m_7208_(ILnet/minecraft/world/entity/player/Inventory;Lnet/minecraft/world/entity/player/Player;)Lnet/minecraft/world/inventory/AbstractContainerMenu;'
-        ]
-        refmap.data.searge.'com/lootrbiggerchest/mixin/SpecialChestInventoryMixin' = [
-            'createMenu(ILnet/minecraft/world/entity/player/Inventory;Lnet/minecraft/world/entity/player/Player;)Lnet/minecraft/world/inventory/AbstractContainerMenu;': 'Lnoobanidus/mods/lootr/data/SpecialChestInventory;m_7208_(ILnet/minecraft/world/entity/player/Inventory;Lnet/minecraft/world/entity/player/Player;)Lnet/minecraft/world/inventory/AbstractContainerMenu;'
-        ]
-        refmap.mappings.'com/lootrbiggerchest/mixin/LootrChestOpenersCounterMixin' = [
+        ],
+        'com/lootrbiggerchest/mixin/LootrChestOpenersCounterMixin': [
             'isOwnContainer(Lnet/minecraft/world/entity/player/Player;)Z': 'Lnoobanidus/mods/lootr/block/entities/LootrChestBlockEntity$1;m_142718_(Lnet/minecraft/world/entity/player/Player;)Z'
-        ]
-        refmap.data.searge.'com/lootrbiggerchest/mixin/LootrChestOpenersCounterMixin' = [
-            'isOwnContainer(Lnet/minecraft/world/entity/player/Player;)Z': 'Lnoobanidus/mods/lootr/block/entities/LootrChestBlockEntity$1;m_142718_(Lnet/minecraft/world/entity/player/Player;)Z'
-        ]
-        refmap.mappings.'com/lootrbiggerchest/mixin/LootrBarrelOpenersCounterMixin' = [
+        ],
+        'com/lootrbiggerchest/mixin/LootrBarrelOpenersCounterMixin': [
             'isOwnContainer(Lnet/minecraft/world/entity/player/Player;)Z': 'Lnoobanidus/mods/lootr/block/entities/LootrBarrelBlockEntity$1;m_142718_(Lnet/minecraft/world/entity/player/Player;)Z'
-        ]
-        refmap.data.searge.'com/lootrbiggerchest/mixin/LootrBarrelOpenersCounterMixin' = [
-            'isOwnContainer(Lnet/minecraft/world/entity/player/Player;)Z': 'Lnoobanidus/mods/lootr/block/entities/LootrBarrelBlockEntity$1;m_142718_(Lnet/minecraft/world/entity/player/Player;)Z'
-        ]
-        refmap.mappings.'com/lootrbiggerchest/mixin/LootrChestMinecartEntityMixin' = [
+        ],
+        'com/lootrbiggerchest/mixin/LootrChestMinecartEntityMixin': [
             'getContainerSize': 'Lnoobanidus/mods/lootr/entity/LootrChestMinecartEntity;m_6643_()I',
             'addAdditionalSaveData': 'Lnoobanidus/mods/lootr/entity/LootrChestMinecartEntity;m_7380_(Lnet/minecraft/nbt/CompoundTag;)V',
             'readAdditionalSaveData': 'Lnoobanidus/mods/lootr/entity/LootrChestMinecartEntity;m_7378_(Lnet/minecraft/nbt/CompoundTag;)V'
-        ]
-        refmap.mappings.'com/lootrbiggerchest/mixin/AbstractMinecartContainerAccessor' = [
-            'itemStacks': 'Lnet/minecraft/world/entity/vehicle/AbstractMinecartContainer;f_38202_'
-        ]
-        refmap.mappings.'com/lootrbiggerchest/mixin/ChestBlockEntityMixin' = [
+        ],
+        'com/lootrbiggerchest/mixin/AbstractMinecartContainerAccessor': [
+            'itemStacks': 'f_38202_:Lnet/minecraft/core/NonNullList;'
+        ],
+        'com/lootrbiggerchest/mixin/ChestBlockEntityMixin': [
             'getContainerSize': 'Lnet/minecraft/world/level/block/entity/ChestBlockEntity;m_6643_()I',
             'saveAdditional': 'Lnet/minecraft/world/level/block/entity/ChestBlockEntity;m_183515_(Lnet/minecraft/nbt/CompoundTag;)V',
             'load': 'Lnet/minecraft/world/level/block/entity/ChestBlockEntity;m_142466_(Lnet/minecraft/nbt/CompoundTag;)V',
             'items': 'Lnet/minecraft/world/level/block/entity/ChestBlockEntity;f_59073_'
         ]
-        refmap.data.searge.'com/lootrbiggerchest/mixin/AbstractMinecartContainerAccessor' = [
-            'itemStacks': 'f_38202_:Lnet/minecraft/core/NonNullList;'
-        ]
-        refmapFile.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(refmap))
-        def copyFile = layout.buildDirectory.file("tmp/compileJava/${mod_id}.refmap.json").get().asFile
-        copyFile.text = refmapFile.text
+]
+def generatedRefmap = layout.buildDirectory.file('tmp/compileJava/compileJava-refmap.json')
+def rawRefmap = layout.buildDirectory.file('tmp/compileJava/raw-refmap.json')
+def patchedRefmap = layout.buildDirectory.file("tmp/compileJava/${mod_id}.refmap.json")
+
+tasks.named('compileJava', JavaCompile).configure {
+    outputs.file rawRefmap
+    doLast {
+        rawRefmap.get().asFile.text = generatedRefmap.get().asFile.text
     }
 }
 
-tasks.named('processResources', ProcessResources).configure {
+def patchRefmap = tasks.register('patchRefmap') {
+    dependsOn tasks.named('compileJava')
+    inputs.file(rawRefmap).withPropertyName('rawRefmap')
+    inputs.property('manualMappings', manualRefmapMappings)
+    outputs.files(generatedRefmap, patchedRefmap)
+    doLast {
+        def refmap = new groovy.json.JsonSlurper().parse(rawRefmap.get().asFile)
+        manualRefmapMappings.each { mixinName, mappings ->
+            refmap.mappings[mixinName] = (refmap.mappings[mixinName] ?: [:]) + mappings
+            refmap.data.searge[mixinName] = (refmap.data.searge[mixinName] ?: [:]) + mappings
+        }
+        def json = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(refmap))
+        generatedRefmap.get().asFile.text = json
+        patchedRefmap.get().asFile.text = json
+    }
+}
+
+tasks.matching { it.name == 'addMixinsToJar' }.configureEach {
     dependsOn patchRefmap
 }
 
 tasks.named('processResources', ProcessResources).configure {
+    dependsOn patchRefmap
+    inputs.file(patchedRefmap).withPropertyName('patchedRefmap')
     var replaceProperties = [
             minecraft_version: minecraft_version, minecraft_version_range: minecraft_version_range,
             forge_version: forge_version, forge_version_range: forge_version_range,
@@ -119,6 +126,8 @@ tasks.named('processResources', ProcessResources).configure {
 }
 
 jar {
+    dependsOn patchRefmap
+    inputs.file(patchedRefmap).withPropertyName('patchedRefmap')
     manifest {
         attributes([
             'Specification-Title'     : mod_id,
@@ -134,7 +143,13 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 tasks.named('test', Test).configure {
+    dependsOn patchRefmap
+    inputs.file(patchedRefmap).withPropertyName('patchedRefmap')
     useJUnitPlatform()
+}
+
+tasks.withType(PublishModTask).configureEach {
+    dependsOn 'reobfJar'
 }
 
 publishMods {

@@ -31,6 +31,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import noobanidus.mods.lootr.block.entities.LootrBarrelBlockEntity;
 import noobanidus.mods.lootr.block.entities.LootrChestBlockEntity;
+import noobanidus.mods.lootr.block.entities.LootrInventoryBlockEntity;
 import noobanidus.mods.lootr.block.entities.LootrShulkerBlockEntity;
 import noobanidus.mods.lootr.data.ChestData;
 import noobanidus.mods.lootr.entity.LootrChestMinecartEntity;
@@ -38,6 +39,7 @@ import noobanidus.mods.lootr.entity.LootrChestMinecartEntity;
 import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -106,6 +108,7 @@ public class LootrBiggerChest {
     public static final String ROWS_KEY = "LBCRows";
     public static final String COLS_KEY = "LBCCols";
     public static final String PLAYER_SIZES_KEY = "LBCPlayerSizes";
+    public static final String INT_INVENTORY_SIZE_KEY = "LBCIntInventorySize";
     public static final String PLAYER_KEY = "Player";
     public static final String ITEMS_KEY = "Items";
     public static final String SLOT_KEY = "Slot";
@@ -154,6 +157,7 @@ public class LootrBiggerChest {
 
     @Nullable
     public static ContainerType containerType(Object source) {
+        if (source instanceof LootrInventoryBlockEntity) return null;
         if (source instanceof LootrBarrelBlockEntity) return ContainerType.BARREL;
         if (source instanceof LootrShulkerBlockEntity) return ContainerType.SHULKER;
         if (source instanceof LootrChestBlockEntity) return ContainerType.CHEST;
@@ -311,37 +315,26 @@ public class LootrBiggerChest {
         return tag.contains(ITEMS_KEY, Tag.TAG_LIST);
     }
 
-    public static boolean itemsNeedNormalization(CompoundTag tag, int capacity) {
-        Tag rawItems = tag.get(ITEMS_KEY);
-        if (rawItems == null) return false;
-        if (!(rawItems instanceof ListTag serialized)) return true;
-        if (serialized.isEmpty()) return false;
-        if (serialized.getElementType() != Tag.TAG_COMPOUND) return true;
-
-        boolean[] seen = new boolean[MAX_SLOTS];
-        int previousSlot = -1;
+    public static boolean hasHighIntSlotItems(CompoundTag tag) {
+        ListTag serialized = tag.getList(ITEMS_KEY, Tag.TAG_COMPOUND);
         for (int index = 0; index < serialized.size(); index++) {
-            CompoundTag itemTag = serialized.getCompound(index);
-            Tag slotTag = itemTag.get(SLOT_KEY);
-            if (!(slotTag instanceof IntTag intTag)) return true;
-            int slot = intTag.getAsInt();
-            if (slot < 0 || slot >= capacity || slot >= MAX_SLOTS || seen[slot]
-                    || slot <= previousSlot) return true;
-            ItemStack stack;
-            try {
-                stack = ItemStack.of(itemTag);
-            } catch (RuntimeException exception) {
-                return true;
-            }
-            if (stack.isEmpty()) return true;
-            CompoundTag canonical = new CompoundTag();
-            canonical.putInt(SLOT_KEY, slot);
-            stack.save(canonical);
-            if (!canonical.equals(itemTag)) return true;
-            seen[slot] = true;
-            previousSlot = slot;
+            Tag slot = serialized.getCompound(index).get(SLOT_KEY);
+            if (slot instanceof IntTag intTag && intTag.getAsInt() >= 256) return true;
         }
         return false;
+    }
+
+    public static int readLegacyIntInventorySize(CompoundTag tag, int existingSlots) {
+        if (!tag.contains(INT_INVENTORY_SIZE_KEY, Tag.TAG_INT)) return -1;
+        int size = tag.getInt(INT_INVENTORY_SIZE_KEY);
+        return size > 0 && size <= Math.max(existingSlots, MAX_SLOTS) ? size : -1;
+    }
+
+    public static boolean itemsNeedNormalization(CompoundTag tag,
+                                                   NonNullList<ItemStack> loadedItems,
+                                                   int maximumSlots) {
+        CompoundTag canonical = saveAllItemsWithIntSlots(new CompoundTag(), loadedItems, maximumSlots);
+        return !Objects.equals(tag.get(ITEMS_KEY), canonical.get(ITEMS_KEY));
     }
 
     public static boolean hasOccupiedItems(NonNullList<ItemStack> items) {
@@ -353,8 +346,14 @@ public class LootrBiggerChest {
 
     public static CompoundTag saveAllItemsWithIntSlots(CompoundTag tag,
                                                         NonNullList<ItemStack> items) {
+        return saveAllItemsWithIntSlots(tag, items, MAX_SLOTS);
+    }
+
+    public static CompoundTag saveAllItemsWithIntSlots(CompoundTag tag,
+                                                        NonNullList<ItemStack> items,
+                                                        int maximumSlots) {
         ListTag serialized = new ListTag();
-        for (int slot = 0; slot < Math.min(items.size(), MAX_SLOTS); slot++) {
+        for (int slot = 0; slot < Math.min(items.size(), maximumSlots); slot++) {
             ItemStack stack = items.get(slot);
             if (stack.isEmpty()) continue;
             CompoundTag itemTag = new CompoundTag();
@@ -369,13 +368,19 @@ public class LootrBiggerChest {
     public static void loadAllItemsWithIntSlots(CompoundTag tag,
                                                  NonNullList<ItemStack> items,
                                                  String owner) {
+        loadAllItemsWithIntSlots(tag, items, owner, MAX_SLOTS);
+    }
+
+    public static void loadAllItemsWithIntSlots(CompoundTag tag,
+                                                 NonNullList<ItemStack> items,
+                                                 String owner, int maximumSlots) {
         for (int slot = 0; slot < items.size(); slot++) items.set(slot, ItemStack.EMPTY);
-        boolean[] populated = new boolean[Math.min(items.size(), MAX_SLOTS)];
+        boolean[] populated = new boolean[Math.min(items.size(), maximumSlots)];
         ListTag serialized = tag.getList(ITEMS_KEY, Tag.TAG_COMPOUND);
         for (int index = 0; index < serialized.size(); index++) {
             CompoundTag itemTag = serialized.getCompound(index);
             int slot = decodeSlot(itemTag);
-            if (slot < 0 || slot >= items.size() || slot >= MAX_SLOTS) {
+            if (slot < 0 || slot >= items.size() || slot >= maximumSlots) {
                 LOGGER.warn("Ignoring invalid {} item slot {}", owner, slot);
                 continue;
             }
@@ -393,13 +398,17 @@ public class LootrBiggerChest {
     }
 
     public static int requiredSlotsFromItems(CompoundTag tag, String owner) {
+        return requiredSlotsFromItems(tag, owner, MAX_SLOTS);
+    }
+
+    public static int requiredSlotsFromItems(CompoundTag tag, String owner, int maximumSlots) {
         if (!hasSerializedItems(tag)) return 0;
         int requiredSlots = 0;
         ListTag serialized = tag.getList(ITEMS_KEY, Tag.TAG_COMPOUND);
         for (int index = 0; index < serialized.size(); index++) {
             CompoundTag itemTag = serialized.getCompound(index);
             int slot = decodeSlot(itemTag);
-            if (slot < 0 || slot >= MAX_SLOTS) {
+            if (slot < 0 || slot >= maximumSlots) {
                 LOGGER.warn("Ignoring invalid {} item slot {}", owner, slot);
                 continue;
             }

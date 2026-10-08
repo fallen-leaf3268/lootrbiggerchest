@@ -7,7 +7,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
-import noobanidus.mods.lootr.block.entities.LootrChestBlockEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -23,7 +22,7 @@ public class ChestBlockEntityMixin {
 
     @Inject(method = "getContainerSize", at = @At("HEAD"), cancellable = true)
     private void modifyChestSize(CallbackInfoReturnable<Integer> cir) {
-        if (!((Object) this instanceof LootrChestBlockEntity)) return;
+        if (LootrBiggerChest.containerType(this) != ContainerType.CHEST) return;
         BlockEntity blockEntity = (BlockEntity) (Object) this;
         CompoundTag data = blockEntity.getPersistentData();
         if (!LootrBiggerChest.shouldManage(data, ContainerType.CHEST)) return;
@@ -40,7 +39,7 @@ public class ChestBlockEntityMixin {
 
     @Inject(method = "saveAdditional", at = @At("TAIL"))
     private void onSaveAdditional(CompoundTag tag, CallbackInfo ci) {
-        if (!((Object) this instanceof LootrChestBlockEntity)) return;
+        if (LootrBiggerChest.containerType(this) != ContainerType.CHEST) return;
         LootrBiggerChest.saveSizeToTag(((BlockEntity) (Object) this).getPersistentData(), tag);
         if (LootrBiggerChest.hasSerializedItems(tag) || LootrBiggerChest.hasOccupiedItems(items)) {
             LootrBiggerChest.saveAllItemsWithIntSlots(tag, items);
@@ -49,7 +48,7 @@ public class ChestBlockEntityMixin {
 
     @Inject(method = "load", at = @At("TAIL"))
     private void afterLoad(CompoundTag tag, CallbackInfo ci) {
-        if (!((Object) this instanceof LootrChestBlockEntity)) return;
+        if (LootrBiggerChest.containerType(this) != ContainerType.CHEST) return;
         BlockEntity blockEntity = (BlockEntity) (Object) this;
         CompoundTag data = blockEntity.getPersistentData();
         LootrBiggerChest.loadSizeFromTag(tag, data);
