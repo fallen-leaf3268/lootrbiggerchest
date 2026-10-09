@@ -75,3 +75,5 @@
 | `assets/lootrbiggerchest/textures/gui/slot.png` | 18×18 | 容器、玩家背包及快捷栏共用；外围 1 像素边框，中央 16×16 对齐物品区域 |
 
 两张材质均为本模组原创灰色像素图。替换时保留上述尺寸和切片位置；界面整体缩放会同时作用于面板、槽位和物品。
+
+可编辑源文件为 [panel.bbmodel](src/main/art/gui/panel.bbmodel) 和 [slot.bbmodel](src/main/art/gui/slot.bbmodel)，均在 Blockbench 中绘制并保存，包含内嵌材质与绘图历史。用 Blockbench 打开后，可在 Paint 中修改，再将图片导出为对应名称的 PNG，放入资源包中的上述路径。
