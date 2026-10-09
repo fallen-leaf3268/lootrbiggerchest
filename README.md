@@ -63,17 +63,4 @@
 
 - 配置修改后即时生效，无需重启
 - 已存在的旧容器保持首次打开时确定的尺寸不变
-- 容器 GUI 按容量拼接，超出当前窗口时自动缩放
-
-## 资源包替换 GUI 材质
-
-在资源包中提供以下同路径 PNG 即可修改本模组界面：
-
-| 路径 | 固定尺寸 | 绘制方式 |
-|------|----------|----------|
-| `assets/lootrbiggerchest/textures/gui/panel.png` | 24×24 | 九宫格面板；横纵分界均为 0、4、20、24，四角保持 4×4，边线与中心拉伸 |
-| `assets/lootrbiggerchest/textures/gui/slot.png` | 18×18 | 容器、玩家背包及快捷栏共用；外围 1 像素边框，中央 16×16 对齐物品区域 |
-
-两张材质均为本模组原创灰色像素图。替换时保留上述尺寸和切片位置；界面整体缩放会同时作用于面板、槽位和物品。
-
-可编辑源文件为 [panel.bbmodel](src/main/art/gui/panel.bbmodel) 和 [slot.bbmodel](src/main/art/gui/slot.bbmodel)，均在 Blockbench 中绘制并保存，包含内嵌材质与绘图历史。用 Blockbench 打开后，可在 Paint 中修改，再将图片导出为对应名称的 PNG，放入资源包中的上述路径。
+- 容器 GUI 由代码拼接原版箱子材质，超出当前窗口时自动缩放
