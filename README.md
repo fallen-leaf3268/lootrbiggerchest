@@ -39,7 +39,7 @@
 
 ## 导出与替换完整 GUI
 
-在客户端执行 `/lootrbiggerchest ui chest 6 12`，导出 6 行 12 列的完整界面背景。类型可选 `chest`、`barrel`、`shulker`、`minecart`，行数为 1~20，列数为 1~32。
+在客户端执行 `/lootrbiggerchest ui chest 6 12`，导出 6 行 12 列的完整界面背景。类型可选 `chest`、`barrel`、`shulker`、`minecart`。
 
 文件生成在当前版本目录的 `lootrbiggerchest/exports/assets/lootrbiggerchest/textures/gui/chest/6x12.png`供玩家进行绘制。
 
