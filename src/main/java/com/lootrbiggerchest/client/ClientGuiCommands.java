@@ -28,9 +28,9 @@ public final class ClientGuiCommands {
 
     public static void onRegisterCommands(RegisterClientCommandsEvent event) {
         Minecraft minecraft = Minecraft.getInstance();
-        Path packRoot = minecraft.gameDirectory.toPath().resolve("resourcepacks/lootrbiggerchest-ui");
+        Path versionDirectory = minecraft.gameDirectory.toPath();
         register(event.getDispatcher(), (type, rows, cols) ->
-                GuiTemplateExporter.export(minecraft.getResourceManager(), packRoot, type, rows, cols));
+                GuiTemplateExporter.export(minecraft.getResourceManager(), versionDirectory, type, rows, cols));
     }
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, ExportAction action) {

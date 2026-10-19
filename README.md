@@ -69,8 +69,8 @@
 
 在客户端执行 `/lootrbiggerchest ui export chest 6 12`，导出 6 行 12 列的完整界面背景。类型可选 `chest`、`barrel`、`shulker`、`minecart`，行数为 1~20，列数为 1~32。
 
-文件生成在游戏目录的 `resourcepacks/lootrbiggerchest-ui/assets/lootrbiggerchest/textures/gui/chest/6x12.png`，并自动生成资源包元数据。已有图片不会被覆盖。
+文件生成在当前版本实例目录的 `lootrbiggerchest/exports/chest/6x12.png`。根目录使用启动器传入的游戏目录；启用版本隔离时即为对应版本目录。导出只生成 PNG，不自动创建资源包，已有图片不会被覆盖。
 
-直接编辑 PNG，保留图片尺寸和槽位位置，再启用该资源包并重载资源。图片包含容器与玩家物品栏背景；标题、物品及提示由游戏绘制。
+直接编辑 PNG，保留图片尺寸和槽位位置。玩家决定使用时，再将图片复制到自己的资源包中，例如 `assets/lootrbiggerchest/textures/gui/chest/6x12.png`，然后启用资源包并重载资源。导出目录不会被自动加载。图片包含容器与玩家物品栏背景；标题、物品及提示由游戏绘制。
 
 四类容器分别使用自己的目录，按行数和列数匹配完整 PNG。未提供图片、图片无法读取或尺寸不符时，使用默认代码绘制；不会借用其它类型或尺寸的图片。
