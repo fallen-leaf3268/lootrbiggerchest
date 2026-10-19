@@ -78,11 +78,7 @@ public class LootrBiggerChestMenu extends AbstractContainerMenu {
             throw invalidOpeningData(id, ct,
                     "received " + receivedType + " " + rows + "x" + cols);
         }
-        int slots = Math.multiplyExact(rows, cols);
-        LootrBiggerChestMenu menu = new LootrBiggerChestMenu(
-                LootrBiggerChest.getMenu(ct), id, inv,
-                new SimpleContainer(slots), rows, cols, ct);
-        return menu;
+        return new LootrBiggerChestMenu(LootrBiggerChest.getMenu(ct), id, inv, rows, cols, ct);
     }
 
     private static IllegalStateException invalidOpeningData(int id, ContainerType type,
@@ -96,7 +92,7 @@ public class LootrBiggerChestMenu extends AbstractContainerMenu {
         if (slotIndex < 0 || slotIndex >= this.slots.size()) return ItemStack.EMPTY;
         ItemStack moved = ItemStack.EMPTY;
         Slot slot = this.slots.get(slotIndex);
-        if (slot != null && slot.hasItem()) {
+        if (slot.hasItem()) {
             ItemStack stack = slot.getItem();
             moved = stack.copy();
             int playerStart = containerSize;

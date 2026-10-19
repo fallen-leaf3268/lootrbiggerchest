@@ -2,6 +2,7 @@ package com.lootrbiggerchest;
 
 import com.lootrbiggerchest.menu.LootrBiggerChestMenu;
 import com.lootrbiggerchest.menu.LootrBiggerChestMenu.ContainerType;
+import com.lootrbiggerchest.proxy.IProxy;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CompoundTag;
@@ -25,7 +26,6 @@ import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.network.NetworkRegistry;
-import net.minecraftforge.network.simple.SimpleChannel;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
@@ -49,7 +49,7 @@ public class LootrBiggerChest {
     public static final String MOD_ID = "lootrbiggerchest";
     public static final String NETWORK_PROTOCOL = "2";
     public static final org.slf4j.Logger LOGGER = com.mojang.logging.LogUtils.getLogger();
-    public static com.lootrbiggerchest.proxy.IProxy PROXY;
+    private final IProxy proxy;
 
     private static final DeferredRegister<MenuType<?>> MENU_TYPES =
             DeferredRegister.create(ForgeRegistries.MENU_TYPES, MOD_ID);
@@ -74,13 +74,11 @@ public class LootrBiggerChest {
                     IForgeMenuType.create((id, inv, data) ->
                             LootrBiggerChestMenu.fromNetwork(id, inv, data, ContainerType.MINECART)));
 
-    private static SimpleChannel CHANNEL;
-
     public LootrBiggerChest() {
-        PROXY = net.minecraftforge.fml.DistExecutor.safeRunForDist(
+        proxy = net.minecraftforge.fml.DistExecutor.safeRunForDist(
             () -> com.lootrbiggerchest.proxy.ClientProxy::new,
             () -> com.lootrbiggerchest.proxy.ServerProxy::new);
-        CHANNEL = NetworkRegistry.newSimpleChannel(
+        NetworkRegistry.newSimpleChannel(
                 new ResourceLocation(MOD_ID, "menu_size"),
                 () -> NETWORK_PROTOCOL,
                 NETWORK_PROTOCOL::equals,
@@ -92,8 +90,8 @@ public class LootrBiggerChest {
         modBus.addListener(this::onClientSetup);
     }
 
-    private void onClientSetup(net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent event) {
-        event.enqueueWork(() -> PROXY.registerScreens());
+    private void onClientSetup(FMLClientSetupEvent event) {
+        event.enqueueWork(proxy::registerScreens);
     }
 
     public static MenuType<LootrBiggerChestMenu> getMenu(ContainerType type) {

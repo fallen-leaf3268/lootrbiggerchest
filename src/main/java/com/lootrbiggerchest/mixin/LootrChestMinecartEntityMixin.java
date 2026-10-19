@@ -3,7 +3,6 @@ package com.lootrbiggerchest.mixin;
 import com.lootrbiggerchest.LootrBiggerChest;
 import com.lootrbiggerchest.menu.LootrBiggerChestMenu.ContainerType;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.entity.Entity;
 
 import noobanidus.mods.lootr.entity.LootrChestMinecartEntity;
 import org.spongepowered.asm.mixin.Mixin;
@@ -17,39 +16,41 @@ public class LootrChestMinecartEntityMixin {
 
     @Inject(method = "getContainerSize", at = @At("HEAD"), cancellable = true, remap = false)
     private void modifyGetContainerSize(CallbackInfoReturnable<Integer> cir) {
-        CompoundTag data = ((Entity) (Object) this).getPersistentData();
+        LootrChestMinecartEntity self = (LootrChestMinecartEntity) (Object) this;
+        CompoundTag data = self.getPersistentData();
         if (!LootrBiggerChest.shouldManage(data, ContainerType.MINECART)) return;
         int[] size = LootrBiggerChest.resolveOrCreateSize(data, ContainerType.MINECART);
         AbstractMinecartContainerAccessor accessor = (AbstractMinecartContainerAccessor) this;
         LootrBiggerChest.ResizedContainer resized = LootrBiggerChest.reconcileSizeWithItems(
-                data, size, accessor.getItemStacks(), "Lootr minecart");
+                data, size, self.getItemStacks(), "Lootr minecart");
         accessor.setItemStacks(resized.items());
         cir.setReturnValue(resized.containerSize());
     }
 
     @Inject(method = "addAdditionalSaveData", at = @At("TAIL"))
     private void onAddAdditionalSaveData(CompoundTag tag, CallbackInfo ci) {
-        LootrBiggerChest.saveSizeToTag(((Entity) (Object) this).getPersistentData(), tag);
-        AbstractMinecartContainerAccessor accessor = (AbstractMinecartContainerAccessor) this;
+        LootrChestMinecartEntity self = (LootrChestMinecartEntity) (Object) this;
+        LootrBiggerChest.saveSizeToTag(self.getPersistentData(), tag);
         if (LootrBiggerChest.hasSerializedItems(tag)
-                || LootrBiggerChest.hasOccupiedItems(accessor.getItemStacks())) {
-            LootrBiggerChest.saveAllItemsWithIntSlots(tag, accessor.getItemStacks());
+                || LootrBiggerChest.hasOccupiedItems(self.getItemStacks())) {
+            LootrBiggerChest.saveAllItemsWithIntSlots(tag, self.getItemStacks());
         }
     }
 
     @Inject(method = "readAdditionalSaveData", at = @At("TAIL"))
     private void afterReadAdditionalSaveData(CompoundTag tag, CallbackInfo ci) {
-        CompoundTag data = ((Entity) (Object) this).getPersistentData();
+        LootrChestMinecartEntity self = (LootrChestMinecartEntity) (Object) this;
+        CompoundTag data = self.getPersistentData();
         LootrBiggerChest.loadSizeFromTag(tag, data);
         int required = LootrBiggerChest.requiredSlotsFromItems(tag, "Lootr minecart");
         AbstractMinecartContainerAccessor accessor = (AbstractMinecartContainerAccessor) this;
         int loadedSlots = LootrBiggerChest.loadedContainerSlots(
-                data, accessor.getItemStacks().size(), required);
+                data, self.getItemStacks().size(), required);
         accessor.setItemStacks(LootrBiggerChest.resizeItemsSafely(
-                accessor.getItemStacks(), loadedSlots, "Lootr minecart"));
+                self.getItemStacks(), loadedSlots, "Lootr minecart"));
         if (LootrBiggerChest.hasSerializedItems(tag)) {
             LootrBiggerChest.loadAllItemsWithIntSlots(
-                    tag, accessor.getItemStacks(), "Lootr minecart");
+                    tag, self.getItemStacks(), "Lootr minecart");
         }
     }
 }

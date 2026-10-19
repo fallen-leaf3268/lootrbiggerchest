@@ -1,7 +1,6 @@
 package com.lootrbiggerchest.client;
 
 import com.lootrbiggerchest.menu.LootrBiggerChestMenu;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -25,15 +24,8 @@ public class LootrBiggerChestScreen extends AbstractContainerScreen<LootrBiggerC
 
     @Override
     public void added() {
-        fitGuiScale(Minecraft.getInstance());
+        ContainerGuiScale.open(this);
         super.added();
-    }
-
-    @Override
-    public void resize(Minecraft client, int width, int height) {
-        fitGuiScale(client);
-        var window = client.getWindow();
-        super.resize(client, window.getGuiScaledWidth(), window.getGuiScaledHeight());
     }
 
     @Override
@@ -41,19 +33,8 @@ public class LootrBiggerChestScreen extends AbstractContainerScreen<LootrBiggerC
         try {
             super.removed();
         } finally {
-            var client = Minecraft.getInstance();
-            var window = client.getWindow();
-            window.setGuiScale(window.calculateScale(
-                    client.options.guiScale().get(), client.isEnforceUnicode()));
+            ContainerGuiScale.close(this);
         }
-    }
-
-    private void fitGuiScale(Minecraft client) {
-        var window = client.getWindow();
-        double preferredScale = window.calculateScale(
-                client.options.guiScale().get(), client.isEnforceUnicode());
-        window.setGuiScale(ContainerScreenLayout.fitScale(window.getWidth(), window.getHeight(),
-                preferredScale, this.imageWidth, this.imageHeight));
     }
 
     @Override

@@ -37,8 +37,10 @@ public final class ClientGuiCommands {
         var ui = Commands.literal("ui");
         for (ContainerType type : ContainerType.values()) {
             ui.then(Commands.literal(type.name().toLowerCase(Locale.ROOT))
-                    .then(Commands.argument("rows", IntegerArgumentType.integer(1, LootrBiggerChestConfig.MAX_ROWS))
-                            .then(Commands.argument("cols", IntegerArgumentType.integer(1, LootrBiggerChestConfig.MAX_COLUMNS))
+                    .then(Commands.argument("rows", IntegerArgumentType.integer(
+                                    LootrBiggerChestConfig.MIN_ROWS, LootrBiggerChestConfig.MAX_ROWS))
+                            .then(Commands.argument("cols", IntegerArgumentType.integer(
+                                            LootrBiggerChestConfig.MIN_COLUMNS, LootrBiggerChestConfig.MAX_COLUMNS))
                                     .executes(context -> export(context, action, type)))));
         }
         dispatcher.register(Commands.literal("lootrbiggerchest").then(ui));

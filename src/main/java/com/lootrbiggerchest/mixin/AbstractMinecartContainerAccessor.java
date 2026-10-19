@@ -10,8 +10,5 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 public interface AbstractMinecartContainerAccessor {
 
     @Accessor("itemStacks")
-    NonNullList<ItemStack> getItemStacks();
-
-    @Accessor("itemStacks")
     void setItemStacks(NonNullList<ItemStack> value);
 }
