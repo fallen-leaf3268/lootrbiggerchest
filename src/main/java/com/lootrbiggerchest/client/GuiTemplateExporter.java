@@ -31,7 +31,7 @@ public final class GuiTemplateExporter {
         }
         BufferedImage image = ContainerGuiBackground.createImage(source, rows, cols);
         var texture = ContainerGuiTextures.location(type, rows, cols);
-        Path output = versionDirectory.resolve("lootrbiggerchest/exports/assets")
+        Path output = versionDirectory.resolve("lootrbiggerchest/assets")
                 .resolve(texture.getNamespace()).resolve(texture.getPath());
         Files.createDirectories(output.getParent());
         boolean created = false;

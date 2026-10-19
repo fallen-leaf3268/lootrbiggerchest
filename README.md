@@ -41,6 +41,6 @@
 
 在客户端执行 `/lootrbiggerchest ui chest 6 12`，导出 6 行 12 列的完整界面背景。类型可选 `chest`、`barrel`、`shulker`、`minecart`。
 
-文件生成在当前版本目录的 `lootrbiggerchest/exports/assets/lootrbiggerchest/textures/gui/chest/6x12.png`供玩家进行绘制。
+文件生成在当前版本目录的 `lootrbiggerchest/assets/lootrbiggerchest/textures/gui/chest/6x12.png`供玩家进行绘制。
 
 四类容器分别使用自己的目录，按行数和列数匹配完整 PNG。未提供图片、图片无法读取或尺寸不符时，使用默认代码绘制；不会借用其它类型或尺寸的图片。
