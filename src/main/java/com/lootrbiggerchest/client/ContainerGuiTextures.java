@@ -25,7 +25,7 @@ public final class ContainerGuiTextures implements ResourceManagerReloadListener
     private volatile Map<Key, ResourceLocation> textures = Map.of();
 
     public static ResourceLocation location(ContainerType type, int rows, int cols) {
-        return new ResourceLocation(LootrBiggerChest.MOD_ID, "textures/gui/"
+        return ResourceLocation.fromNamespaceAndPath(LootrBiggerChest.MOD_ID, "textures/gui/"
                 + type.name().toLowerCase(Locale.ROOT) + "/" + rows + "x" + cols + ".png");
     }
 

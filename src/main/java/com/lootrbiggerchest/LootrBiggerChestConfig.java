@@ -1,7 +1,7 @@
 package com.lootrbiggerchest;
 
 import com.lootrbiggerchest.menu.LootrBiggerChestMenu.ContainerType;
-import net.minecraftforge.common.ForgeConfigSpec;
+import net.neoforged.neoforge.common.ModConfigSpec;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
@@ -17,31 +17,31 @@ public class LootrBiggerChestConfig {
 
     private static final Random RANDOM = new Random();
 
-    public static final ForgeConfigSpec COMMON_SPEC;
+    public static final ModConfigSpec COMMON_SPEC;
     public static final Common COMMON;
 
     static {
-        Pair<Common, ForgeConfigSpec> pair = new ForgeConfigSpec.Builder().configure(Common::new);
+        Pair<Common, ModConfigSpec> pair = new ModConfigSpec.Builder().configure(Common::new);
         COMMON = pair.getLeft();
         COMMON_SPEC = pair.getRight();
     }
 
     public static class Common {
-        public final ForgeConfigSpec.BooleanValue playerSpecificContainerSize;
-        public final ForgeConfigSpec.IntValue chestRows;
-        public final ForgeConfigSpec.IntValue chestColumns;
-        public final ForgeConfigSpec.IntValue barrelRows;
-        public final ForgeConfigSpec.IntValue barrelColumns;
-        public final ForgeConfigSpec.IntValue shulkerRows;
-        public final ForgeConfigSpec.IntValue shulkerColumns;
-        public final ForgeConfigSpec.IntValue minecartRows;
-        public final ForgeConfigSpec.IntValue minecartColumns;
-        public final ForgeConfigSpec.ConfigValue<List<? extends String>> chestRandomSizes;
-        public final ForgeConfigSpec.ConfigValue<List<? extends String>> barrelRandomSizes;
-        public final ForgeConfigSpec.ConfigValue<List<? extends String>> shulkerRandomSizes;
-        public final ForgeConfigSpec.ConfigValue<List<? extends String>> minecartRandomSizes;
+        public final ModConfigSpec.BooleanValue playerSpecificContainerSize;
+        public final ModConfigSpec.IntValue chestRows;
+        public final ModConfigSpec.IntValue chestColumns;
+        public final ModConfigSpec.IntValue barrelRows;
+        public final ModConfigSpec.IntValue barrelColumns;
+        public final ModConfigSpec.IntValue shulkerRows;
+        public final ModConfigSpec.IntValue shulkerColumns;
+        public final ModConfigSpec.IntValue minecartRows;
+        public final ModConfigSpec.IntValue minecartColumns;
+        public final ModConfigSpec.ConfigValue<List<? extends String>> chestRandomSizes;
+        public final ModConfigSpec.ConfigValue<List<? extends String>> barrelRandomSizes;
+        public final ModConfigSpec.ConfigValue<List<? extends String>> shulkerRandomSizes;
+        public final ModConfigSpec.ConfigValue<List<? extends String>> minecartRandomSizes;
 
-        Common(ForgeConfigSpec.Builder builder) {
+        Common(ModConfigSpec.Builder builder) {
             playerSpecificContainerSize = builder
                     .comment("开启后，每个 Lootr 容器为每名玩家独立计算并持久化容量；已有玩家尺寸不会重新随机")
                     .define("玩家独立容器大小", false);
@@ -52,28 +52,28 @@ public class LootrBiggerChestConfig {
             chestRows = builder.defineInRange("行数", 3, MIN_ROWS, MAX_ROWS);
             chestColumns = builder.defineInRange("列数", 9, MIN_COLUMNS, MAX_COLUMNS);
             chestRandomSizes = builder.comment("随机容量组，格式: \"行,列,权重\" 如 [\"3,9,50\",\"6,9,30\"], 留空则使用固定行列")
-                    .defineList("随机容量", List.of(), String.class::isInstance);
+                    .defineListAllowEmpty("随机容量", List.of(), () -> "3,9,1", String.class::isInstance);
             builder.pop();
 
             builder.push("木桶");
             barrelRows = builder.defineInRange("行数", 3, MIN_ROWS, MAX_ROWS);
             barrelColumns = builder.defineInRange("列数", 9, MIN_COLUMNS, MAX_COLUMNS);
             barrelRandomSizes = builder.comment("随机容量组，格式: \"行,列,权重\" 如 [\"3,9,50\",\"6,9,30\"], 留空则使用固定行列")
-                    .defineList("随机容量", List.of(), String.class::isInstance);
+                    .defineListAllowEmpty("随机容量", List.of(), () -> "3,9,1", String.class::isInstance);
             builder.pop();
 
             builder.push("潜影盒");
             shulkerRows = builder.defineInRange("行数", 3, MIN_ROWS, MAX_ROWS);
             shulkerColumns = builder.defineInRange("列数", 9, MIN_COLUMNS, MAX_COLUMNS);
             shulkerRandomSizes = builder.comment("随机容量组，格式: \"行,列,权重\" 如 [\"3,9,50\",\"6,9,30\"], 留空则使用固定行列")
-                    .defineList("随机容量", List.of(), String.class::isInstance);
+                    .defineListAllowEmpty("随机容量", List.of(), () -> "3,9,1", String.class::isInstance);
             builder.pop();
 
             builder.push("箱子矿车");
             minecartRows = builder.defineInRange("行数", 3, MIN_ROWS, MAX_ROWS);
             minecartColumns = builder.defineInRange("列数", 9, MIN_COLUMNS, MAX_COLUMNS);
             minecartRandomSizes = builder.comment("随机容量组，格式: \"行,列,权重\" 如 [\"3,9,50\",\"6,9,30\"], 留空则使用固定行列")
-                    .defineList("随机容量", List.of(), String.class::isInstance);
+                    .defineListAllowEmpty("随机容量", List.of(), () -> "3,9,1", String.class::isInstance);
             builder.pop();
         }
     }

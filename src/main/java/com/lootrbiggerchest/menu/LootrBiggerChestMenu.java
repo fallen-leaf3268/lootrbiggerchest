@@ -2,7 +2,7 @@ package com.lootrbiggerchest.menu;
 
 import com.lootrbiggerchest.LootrBiggerChest;
 import com.lootrbiggerchest.LootrBiggerChestConfig;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -60,7 +60,7 @@ public class LootrBiggerChestMenu extends AbstractContainerMenu {
         this(type, containerId, playerInv, new SimpleContainer(rows * cols), rows, cols, ct);
     }
 
-    public static LootrBiggerChestMenu fromNetwork(int id, Inventory inv, FriendlyByteBuf data, ContainerType ct) {
+    public static LootrBiggerChestMenu fromNetwork(int id, Inventory inv, RegistryFriendlyByteBuf data, ContainerType ct) {
         if (data == null || data.readableBytes() < Integer.BYTES * 2 + 1) {
             throw invalidOpeningData(id, ct, "missing authoritative extra data");
         }

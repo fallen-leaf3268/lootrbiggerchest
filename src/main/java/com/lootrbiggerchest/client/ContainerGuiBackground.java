@@ -10,7 +10,7 @@ import java.awt.image.BufferedImage;
 
 public final class ContainerGuiBackground {
     public static final ResourceLocation TEXTURE =
-            new ResourceLocation("textures/gui/container/generic_54.png");
+            ResourceLocation.withDefaultNamespace("textures/gui/container/generic_54.png");
 
     private static final int TOP_H = 17;
     private static final int ROW_H = 18;

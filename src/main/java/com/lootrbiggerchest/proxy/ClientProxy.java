@@ -5,29 +5,29 @@ import com.lootrbiggerchest.client.ClientGuiCommands;
 import com.lootrbiggerchest.client.ContainerGuiScale;
 import com.lootrbiggerchest.client.ContainerGuiTextures;
 import com.lootrbiggerchest.client.LootrBiggerChestScreen;
-import net.minecraft.client.gui.screens.MenuScreens;
-import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
+import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import net.neoforged.neoforge.common.NeoForge;
 
-public class ClientProxy implements IProxy {
+public class ClientProxy {
 
-    public ClientProxy() {
-        MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGHEST, ContainerGuiScale::onScreenInit);
-        MinecraftForge.EVENT_BUS.addListener(ClientGuiCommands::onRegisterCommands);
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::registerReloadListeners);
+    public ClientProxy(IEventBus modBus) {
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, ContainerGuiScale::onScreenInit);
+        NeoForge.EVENT_BUS.addListener(ClientGuiCommands::onRegisterCommands);
+        modBus.addListener(this::registerReloadListeners);
+        modBus.addListener(this::registerScreens);
     }
 
     private void registerReloadListeners(RegisterClientReloadListenersEvent event) {
         event.registerReloadListener(ContainerGuiTextures.INSTANCE);
     }
 
-    @Override
-    public void registerScreens() {
-        MenuScreens.register(LootrBiggerChest.CHEST_MENU.get(), LootrBiggerChestScreen::new);
-        MenuScreens.register(LootrBiggerChest.BARREL_MENU.get(), LootrBiggerChestScreen::new);
-        MenuScreens.register(LootrBiggerChest.SHULKER_MENU.get(), LootrBiggerChestScreen::new);
-        MenuScreens.register(LootrBiggerChest.MINECART_MENU.get(), LootrBiggerChestScreen::new);
+    private void registerScreens(RegisterMenuScreensEvent event) {
+        event.register(LootrBiggerChest.CHEST_MENU.get(), LootrBiggerChestScreen::new);
+        event.register(LootrBiggerChest.BARREL_MENU.get(), LootrBiggerChestScreen::new);
+        event.register(LootrBiggerChest.SHULKER_MENU.get(), LootrBiggerChestScreen::new);
+        event.register(LootrBiggerChest.MINECART_MENU.get(), LootrBiggerChestScreen::new);
     }
 }

@@ -2,6 +2,10 @@
 
 扩展 Lootr 箱子、木桶、潜影盒和运输矿车的容量，支持固定尺寸或加权随机尺寸。
 
+本分支用于 Minecraft 1.21.1、NeoForge 21.1.195 及以上的 21.1 系列，需要 Java 21 和 Lootr 1.21.1-1.11.38.127 或更新的 Minecraft 1.21.1 版本。开发基线使用 NeoForge 21.1.262。
+
+使用 Java 21 执行 `./gradlew build`，成品位于 `build/libs/lootrbiggerchest-neoforge-1.21.1-1.0.2.jar`。1.20.1 Forge 版本保留在 `main` 分支。
+
 ## 兼容的容器
 
 | 容器 | 原版尺寸 | 行范围 | 列范围 |
@@ -41,6 +45,6 @@
 
 在客户端执行 `/lootrbiggerchest ui chest 6 12`，导出 6 行 12 列的完整界面背景。类型可选 `chest`、`barrel`、`shulker`、`minecart`。
 
-文件生成在当前版本目录的 `lootrbiggerchest/assets/lootrbiggerchest/textures/gui/chest/6x12.png`供玩家进行绘制。
+文件生成在当前版本目录的 `lootrbiggerchest/assets/lootrbiggerchest/textures/gui/chest/6x12.png`，供玩家修改。将生成目录中的 `assets` 放入自己的资源包后再加载，已有导出文件不会被覆盖。
 
 四类容器分别使用自己的目录，按行数和列数匹配完整 PNG。未提供图片、图片无法读取或尺寸不符时，使用默认代码绘制；不会借用其它类型或尺寸的图片。

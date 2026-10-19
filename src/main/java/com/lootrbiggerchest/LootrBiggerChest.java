@@ -2,41 +2,37 @@ package com.lootrbiggerchest;
 
 import com.lootrbiggerchest.menu.LootrBiggerChestMenu;
 import com.lootrbiggerchest.menu.LootrBiggerChestMenu.ContainerType;
-import com.lootrbiggerchest.proxy.IProxy;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.common.extensions.IForgeMenuType;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.network.NetworkRegistry;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryObject;
-import noobanidus.mods.lootr.block.entities.LootrBarrelBlockEntity;
-import noobanidus.mods.lootr.block.entities.LootrChestBlockEntity;
-import noobanidus.mods.lootr.block.entities.LootrInventoryBlockEntity;
-import noobanidus.mods.lootr.block.entities.LootrShulkerBlockEntity;
-import noobanidus.mods.lootr.data.ChestData;
-import noobanidus.mods.lootr.entity.LootrChestMinecartEntity;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.loading.FMLEnvironment;
+import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredRegister;
+import noobanidus.mods.lootr.common.api.data.ILootrInfo;
+import noobanidus.mods.lootr.common.api.data.ILootrInfoProvider;
+import noobanidus.mods.lootr.common.block.entity.LootrBarrelBlockEntity;
+import noobanidus.mods.lootr.common.block.entity.LootrChestBlockEntity;
+import noobanidus.mods.lootr.common.block.entity.LootrInventoryBlockEntity;
+import noobanidus.mods.lootr.common.block.entity.LootrShulkerBlockEntity;
+import noobanidus.mods.lootr.common.entity.LootrChestMinecartEntity;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -47,51 +43,37 @@ import java.util.function.Supplier;
 public class LootrBiggerChest {
 
     public static final String MOD_ID = "lootrbiggerchest";
-    public static final String NETWORK_PROTOCOL = "2";
     public static final org.slf4j.Logger LOGGER = com.mojang.logging.LogUtils.getLogger();
-    private final IProxy proxy;
 
     private static final DeferredRegister<MenuType<?>> MENU_TYPES =
-            DeferredRegister.create(ForgeRegistries.MENU_TYPES, MOD_ID);
+            DeferredRegister.create(Registries.MENU, MOD_ID);
 
-    public static final RegistryObject<MenuType<LootrBiggerChestMenu>> CHEST_MENU =
+    public static final DeferredHolder<MenuType<?>, MenuType<LootrBiggerChestMenu>> CHEST_MENU =
             MENU_TYPES.register("lootr_chest", () ->
-                    IForgeMenuType.create((id, inv, data) ->
+                    IMenuTypeExtension.create((id, inv, data) ->
                             LootrBiggerChestMenu.fromNetwork(id, inv, data, ContainerType.CHEST)));
 
-    public static final RegistryObject<MenuType<LootrBiggerChestMenu>> BARREL_MENU =
+    public static final DeferredHolder<MenuType<?>, MenuType<LootrBiggerChestMenu>> BARREL_MENU =
             MENU_TYPES.register("lootr_barrel", () ->
-                    IForgeMenuType.create((id, inv, data) ->
+                    IMenuTypeExtension.create((id, inv, data) ->
                             LootrBiggerChestMenu.fromNetwork(id, inv, data, ContainerType.BARREL)));
 
-    public static final RegistryObject<MenuType<LootrBiggerChestMenu>> SHULKER_MENU =
+    public static final DeferredHolder<MenuType<?>, MenuType<LootrBiggerChestMenu>> SHULKER_MENU =
             MENU_TYPES.register("lootr_shulker", () ->
-                    IForgeMenuType.create((id, inv, data) ->
+                    IMenuTypeExtension.create((id, inv, data) ->
                             LootrBiggerChestMenu.fromNetwork(id, inv, data, ContainerType.SHULKER)));
 
-    public static final RegistryObject<MenuType<LootrBiggerChestMenu>> MINECART_MENU =
+    public static final DeferredHolder<MenuType<?>, MenuType<LootrBiggerChestMenu>> MINECART_MENU =
             MENU_TYPES.register("lootr_minecart", () ->
-                    IForgeMenuType.create((id, inv, data) ->
+                    IMenuTypeExtension.create((id, inv, data) ->
                             LootrBiggerChestMenu.fromNetwork(id, inv, data, ContainerType.MINECART)));
 
-    public LootrBiggerChest() {
-        proxy = net.minecraftforge.fml.DistExecutor.safeRunForDist(
-            () -> com.lootrbiggerchest.proxy.ClientProxy::new,
-            () -> com.lootrbiggerchest.proxy.ServerProxy::new);
-        NetworkRegistry.newSimpleChannel(
-                new ResourceLocation(MOD_ID, "menu_size"),
-                () -> NETWORK_PROTOCOL,
-                NETWORK_PROTOCOL::equals,
-                NETWORK_PROTOCOL::equals
-        );
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, LootrBiggerChestConfig.COMMON_SPEC);
-        IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
+    public LootrBiggerChest(IEventBus modBus, ModContainer container) {
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            new com.lootrbiggerchest.proxy.ClientProxy(modBus);
+        }
+        container.registerConfig(ModConfig.Type.COMMON, LootrBiggerChestConfig.COMMON_SPEC);
         MENU_TYPES.register(modBus);
-        modBus.addListener(this::onClientSetup);
-    }
-
-    private void onClientSetup(FMLClientSetupEvent event) {
-        event.enqueueWork(proxy::registerScreens);
     }
 
     public static MenuType<LootrBiggerChestMenu> getMenu(ContainerType type) {
@@ -113,30 +95,20 @@ public class LootrBiggerChest {
     public static final int MAX_SLOTS = LootrBiggerChestConfig.MAX_ROWS
             * LootrBiggerChestConfig.MAX_COLUMNS;
 
-    public interface ChestDataAccess {
-        int lootrbiggerchest$getSize();
-        void lootrbiggerchest$growSize(int requestedSize);
-        boolean lootrbiggerchest$isCustom();
-    }
-
     public interface PlayerSizeAccess {
         PlayerContainerSize lootrbiggerchest$getPlayerSize(UUID playerId);
         PlayerContainerSize lootrbiggerchest$rememberPlayerSize(
                 UUID playerId, PlayerContainerSize size);
         void lootrbiggerchest$loadPlayerSizes(CompoundTag root);
         void lootrbiggerchest$savePlayerSizes(CompoundTag root);
+        void lootrbiggerchest$loadInventories(CompoundTag root, HolderLookup.Provider provider);
     }
 
     public interface SizedInventoryAccess {
         PlayerContainerSize lootrbiggerchest$getStoredSize();
         void lootrbiggerchest$setStoredSize(PlayerContainerSize size);
+        void lootrbiggerchest$markLegacyIntSlots();
     }
-
-    public interface AuthoritativeMenuProvider {
-        AuthoritativeMenuSpec lootrbiggerchest$prepareMenu(Player player);
-    }
-
-    public record AuthoritativeMenuSpec(ContainerType type, int rows, int columns) {}
 
     public record PlayerContainerSize(int rows, int columns) {
         public PlayerContainerSize {
@@ -150,9 +122,6 @@ public class LootrBiggerChest {
         }
     }
 
-    public record ContainerStorageState(boolean hasRows, boolean hasColumns,
-                                        int rows, int columns, int itemCount) {}
-
     @Nullable
     public static ContainerType containerType(Object source) {
         if (source instanceof LootrInventoryBlockEntity) return null;
@@ -164,26 +133,25 @@ public class LootrBiggerChest {
     }
 
     @Nullable
-    public static BaseContainerBlockEntity findLootrBlockEntity(ChestData chestData,
-                                                                 Level level) {
-        if (level == null || level.isClientSide || chestData.getPos() == null) return null;
-        BlockEntity blockEntity = level.getBlockEntity(chestData.getPos());
-        return blockEntity instanceof BaseContainerBlockEntity container ? container : null;
+    public static ContainerType resolveContainerType(ILootrInfo chestData, Level level) {
+        if (level == null || level.isClientSide || chestData.isInfoReferenceInventory()) return null;
+        Object container = chestData.getInfoContainer();
+        ContainerType type = containerType(container);
+        if (type == null || chestData instanceof ILootrInfoProvider && chestData != container) return null;
+        ILootrInfoProvider physical = (ILootrInfoProvider) container;
+        if (!chestData.getInfoUUID().equals(physical.getInfoUUID())
+                || !chestData.getInfoKey().equals(physical.getInfoKey())
+                || !chestData.getInfoDimension().equals(physical.getInfoDimension())
+                || !chestData.getInfoPos().equals(physical.getInfoPos())) return null;
+        return type;
     }
 
     @Nullable
-    public static LootrChestMinecartEntity findLootrMinecart(ChestData chestData,
-                                                             Level level) {
-        if (!(level instanceof ServerLevel serverLevel)
-                || chestData.getEntityId() == null) return null;
-        Entity entity = serverLevel.getEntity(chestData.getEntityId());
-        return entity instanceof LootrChestMinecartEntity cart ? cart : null;
-    }
-
-    @Nullable
-    public static ContainerType resolveContainerType(ChestData chestData, Level level) {
-        ContainerType blockType = containerType(findLootrBlockEntity(chestData, level));
-        return blockType != null ? blockType : containerType(findLootrMinecart(chestData, level));
+    public static CompoundTag persistentData(ILootrInfo info) {
+        Object container = info.getInfoContainer();
+        if (container instanceof BlockEntity blockEntity) return blockEntity.getPersistentData();
+        if (container instanceof Entity entity) return entity.getPersistentData();
+        return null;
     }
 
     public static void writePlayerSizes(CompoundTag root,
@@ -271,35 +239,20 @@ public class LootrBiggerChest {
         return new PlayerContainerSize(recovered[0], recovered[1]);
     }
 
-    public static ContainerStorageState captureStorageState(CompoundTag data,
-                                                             NonNullList<ItemStack> items) {
-        return new ContainerStorageState(data.contains(ROWS_KEY), data.contains(COLS_KEY),
-                data.getInt(ROWS_KEY), data.getInt(COLS_KEY), items.size());
-    }
-
-    public static boolean storageStateChanged(ContainerStorageState before,
-                                              CompoundTag data,
-                                              NonNullList<ItemStack> items) {
-        return !before.equals(captureStorageState(data, items));
-    }
-
-    public static void setChangedIfServer(BlockEntity blockEntity, boolean changed) {
-        if (changed && blockEntity.getLevel() != null && !blockEntity.getLevel().isClientSide) {
+    public static PlayerContainerSize recoverExistingPlayerSize(
+            ILootrInfo info, ContainerType type, NonNullList<ItemStack> items) {
+        CompoundTag data = persistentData(info);
+        if (data == null) {
+            throw new IllegalStateException("Missing Lootr container during inventory migration: "
+                    + info.getInfoKey());
+        }
+        boolean hadSize = readStoredInventorySize(data) != null;
+        int[] requested = resolveOrCreateSize(data, type);
+        if (!hadSize && info.getInfoContainer() instanceof BlockEntity blockEntity) {
             blockEntity.setChanged();
         }
-    }
-
-    public static int loadedContainerSlots(CompoundTag data, int currentSlots,
-                                           int serializedSlots) {
-        int required = Math.max(currentSlots, serializedSlots);
-        PlayerContainerSize stored = readStoredInventorySize(data);
-        if (stored != null) required = Math.max(required, stored.slots());
-        int maximum = LootrBiggerChestConfig.MAX_ROWS * LootrBiggerChestConfig.MAX_COLUMNS;
-        if (required > maximum) {
-            throw new IllegalStateException("Cannot load Lootr container with "
-                    + required + " slots; maximum is " + maximum);
-        }
-        return required;
+        return recoverPlayerSize(Math.max(items.size(), info.getInfoContainerSize()),
+                highestOccupiedSlot(items) - 1, requested[0], requested[1]);
     }
 
     public static int decodeSlot(CompoundTag itemTag) {
@@ -330,33 +283,21 @@ public class LootrBiggerChest {
 
     public static boolean itemsNeedNormalization(CompoundTag tag,
                                                    NonNullList<ItemStack> loadedItems,
-                                                   int maximumSlots) {
-        CompoundTag canonical = saveAllItemsWithIntSlots(new CompoundTag(), loadedItems, maximumSlots);
+                                                   int maximumSlots, HolderLookup.Provider provider) {
+        CompoundTag canonical = saveAllItemsWithIntSlots(
+                new CompoundTag(), loadedItems, maximumSlots, provider);
         return !Objects.equals(tag.get(ITEMS_KEY), canonical.get(ITEMS_KEY));
-    }
-
-    public static boolean hasOccupiedItems(NonNullList<ItemStack> items) {
-        for (ItemStack item : items) {
-            if (!item.isEmpty()) return true;
-        }
-        return false;
-    }
-
-    public static CompoundTag saveAllItemsWithIntSlots(CompoundTag tag,
-                                                        NonNullList<ItemStack> items) {
-        return saveAllItemsWithIntSlots(tag, items, MAX_SLOTS);
     }
 
     public static CompoundTag saveAllItemsWithIntSlots(CompoundTag tag,
                                                         NonNullList<ItemStack> items,
-                                                        int maximumSlots) {
+                                                        int maximumSlots, HolderLookup.Provider provider) {
         ListTag serialized = new ListTag();
         for (int slot = 0; slot < Math.min(items.size(), maximumSlots); slot++) {
             ItemStack stack = items.get(slot);
             if (stack.isEmpty()) continue;
-            CompoundTag itemTag = new CompoundTag();
+            CompoundTag itemTag = (CompoundTag) stack.save(provider);
             itemTag.putInt(SLOT_KEY, slot);
-            stack.save(itemTag);
             serialized.add(itemTag);
         }
         tag.put(ITEMS_KEY, serialized);
@@ -365,13 +306,8 @@ public class LootrBiggerChest {
 
     public static void loadAllItemsWithIntSlots(CompoundTag tag,
                                                  NonNullList<ItemStack> items,
-                                                 String owner) {
-        loadAllItemsWithIntSlots(tag, items, owner, MAX_SLOTS);
-    }
-
-    public static void loadAllItemsWithIntSlots(CompoundTag tag,
-                                                 NonNullList<ItemStack> items,
-                                                 String owner, int maximumSlots) {
+                                                 String owner, int maximumSlots,
+                                                 HolderLookup.Provider provider) {
         for (int slot = 0; slot < items.size(); slot++) items.set(slot, ItemStack.EMPTY);
         boolean[] populated = new boolean[Math.min(items.size(), maximumSlots)];
         ListTag serialized = tag.getList(ITEMS_KEY, Tag.TAG_COMPOUND);
@@ -383,7 +319,7 @@ public class LootrBiggerChest {
                 continue;
             }
             try {
-                ItemStack stack = ItemStack.of(itemTag);
+                ItemStack stack = ItemStack.parseOptional(provider, itemTag);
                 if (!stack.isEmpty() && !populated[slot]) {
                     items.set(slot, stack);
                     populated[slot] = true;
@@ -395,11 +331,8 @@ public class LootrBiggerChest {
         }
     }
 
-    public static int requiredSlotsFromItems(CompoundTag tag, String owner) {
-        return requiredSlotsFromItems(tag, owner, MAX_SLOTS);
-    }
-
-    public static int requiredSlotsFromItems(CompoundTag tag, String owner, int maximumSlots) {
+    public static int requiredSlotsFromItems(CompoundTag tag, String owner, int maximumSlots,
+                                             HolderLookup.Provider provider) {
         if (!hasSerializedItems(tag)) return 0;
         int requiredSlots = 0;
         ListTag serialized = tag.getList(ITEMS_KEY, Tag.TAG_COMPOUND);
@@ -411,7 +344,9 @@ public class LootrBiggerChest {
                 continue;
             }
             try {
-                if (!ItemStack.of(itemTag).isEmpty()) requiredSlots = Math.max(requiredSlots, slot + 1);
+                if (!ItemStack.parseOptional(provider, itemTag).isEmpty()) {
+                    requiredSlots = Math.max(requiredSlots, slot + 1);
+                }
             } catch (RuntimeException exception) {
                 LOGGER.warn("Ignoring malformed {} item in slot {}: {}",
                         owner, slot, exception.getMessage());
@@ -476,11 +411,7 @@ public class LootrBiggerChest {
         return resized;
     }
 
-    public record ResizedContainer(NonNullList<ItemStack> items, int rows, int columns) {
-        public int containerSize() {
-            return rows * columns;
-        }
-    }
+    public record ResizedContainer(NonNullList<ItemStack> items, int rows, int columns) {}
 
     public static ResizedContainer reconcilePlayerMenuSize(PlayerContainerSize requested,
                                                              NonNullList<ItemStack> source,
@@ -493,33 +424,6 @@ public class LootrBiggerChest {
                     + source.size() + " to " + safeSize.slots());
         }
         return new ResizedContainer(resized, safeSize.rows(), safeSize.columns());
-    }
-
-    public static ResizedContainer reconcileSizeWithItems(CompoundTag persistentData,
-                                                           int[] requestedSize,
-                                                           NonNullList<ItemStack> source,
-                                                           String owner) {
-        return reconcileSizeWithItems(persistentData, requestedSize, source, 0, owner);
-    }
-
-    public static ResizedContainer reconcileSizeWithItems(CompoundTag persistentData,
-                                                           int[] requestedSize,
-                                                           NonNullList<ItemStack> source,
-                                                           int minimumSlots,
-                                                           String owner) {
-        int requestedSlots = requestedSize[0] * requestedSize[1];
-        int requiredSlots = Math.max(minimumSlots, highestOccupiedSlot(source));
-        int[] finalSize = requestedSize;
-        if (requestedSlots < requiredSlots) {
-            finalSize = recoverySizeFor(requiredSlots);
-            persistentData.putInt(ROWS_KEY, finalSize[0]);
-            persistentData.putInt(COLS_KEY, finalSize[1]);
-            LOGGER.warn("Restoring {} size from {} to {}x{} to preserve {} slots",
-                    owner, requestedSlots, finalSize[0], finalSize[1], requiredSlots);
-        }
-        int finalSlots = finalSize[0] * finalSize[1];
-        return new ResizedContainer(resizeItemsSafely(source, finalSlots, owner),
-                finalSize[0], finalSize[1]);
     }
 
     public static int[] recoverySizeFor(int requiredSlots) {
@@ -545,10 +449,6 @@ public class LootrBiggerChest {
             }
         }
         return new int[]{bestRows, bestColumns};
-    }
-
-    public static boolean canResizeChestData(int currentSize, int requestedSize) {
-        return currentSize < 0 || requestedSize >= currentSize;
     }
 
     public static void saveSizeToTag(CompoundTag persistentData, CompoundTag saveTag) {
