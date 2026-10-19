@@ -34,15 +34,14 @@ public final class ClientGuiCommands {
     }
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, ExportAction action) {
-        var export = Commands.literal("export");
+        var ui = Commands.literal("ui");
         for (ContainerType type : ContainerType.values()) {
-            export.then(Commands.literal(type.name().toLowerCase(Locale.ROOT))
+            ui.then(Commands.literal(type.name().toLowerCase(Locale.ROOT))
                     .then(Commands.argument("rows", IntegerArgumentType.integer(1, LootrBiggerChestConfig.MAX_ROWS))
                             .then(Commands.argument("cols", IntegerArgumentType.integer(1, LootrBiggerChestConfig.MAX_COLUMNS))
                                     .executes(context -> export(context, action, type)))));
         }
-        dispatcher.register(Commands.literal("lootrbiggerchest")
-                .then(Commands.literal("ui").then(export)));
+        dispatcher.register(Commands.literal("lootrbiggerchest").then(ui));
     }
 
     private static int export(CommandContext<CommandSourceStack> context, ExportAction action,
