@@ -1,18 +1,16 @@
 package com.lootrbiggerchest.client;
 
 import com.lootrbiggerchest.menu.LootrBiggerChestMenu;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 
 public class LootrBiggerChestScreen extends AbstractContainerScreen<LootrBiggerChestMenu> {
 
     private final int rows;
     private final int cols;
-    private ContainerScreenLayout layout;
-    private boolean renderingScaled;
 
     public LootrBiggerChestScreen(LootrBiggerChestMenu menu, Inventory playerInv, Component title) {
         super(menu, playerInv, title);
@@ -26,11 +24,36 @@ public class LootrBiggerChestScreen extends AbstractContainerScreen<LootrBiggerC
     }
 
     @Override
-    protected void init() {
-        this.layout = ContainerScreenLayout.fit(this.width, this.height,
-                this.imageWidth, this.imageHeight);
-        this.leftPos = (layout.logicalWidth() - this.imageWidth) / 2;
-        this.topPos = (layout.logicalHeight() - this.imageHeight) / 2;
+    public void added() {
+        fitGuiScale(Minecraft.getInstance());
+        super.added();
+    }
+
+    @Override
+    public void resize(Minecraft client, int width, int height) {
+        fitGuiScale(client);
+        var window = client.getWindow();
+        super.resize(client, window.getGuiScaledWidth(), window.getGuiScaledHeight());
+    }
+
+    @Override
+    public void removed() {
+        try {
+            super.removed();
+        } finally {
+            var client = Minecraft.getInstance();
+            var window = client.getWindow();
+            window.setGuiScale(window.calculateScale(
+                    client.options.guiScale().get(), client.isEnforceUnicode()));
+        }
+    }
+
+    private void fitGuiScale(Minecraft client) {
+        var window = client.getWindow();
+        double preferredScale = window.calculateScale(
+                client.options.guiScale().get(), client.isEnforceUnicode());
+        window.setGuiScale(ContainerScreenLayout.fitScale(window.getWidth(), window.getHeight(),
+                preferredScale, this.imageWidth, this.imageHeight));
     }
 
     @Override
@@ -48,73 +71,7 @@ public class LootrBiggerChestScreen extends AbstractContainerScreen<LootrBiggerC
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(graphics);
-        int viewportWidth = this.width;
-        int viewportHeight = this.height;
-        graphics.pose().pushPose();
-        try {
-            graphics.pose().translate(layout.offsetX(), layout.offsetY(), 0.0F);
-            graphics.pose().scale(layout.scale(), layout.scale(), 1.0F);
-            this.width = layout.logicalWidth();
-            this.height = layout.logicalHeight();
-            this.renderingScaled = true;
-            super.render(graphics, Mth.floor(layout.toLogicalX(mouseX)),
-                    Mth.floor(layout.toLogicalY(mouseY)), partialTick);
-        } finally {
-            this.width = viewportWidth;
-            this.height = viewportHeight;
-            this.renderingScaled = false;
-            graphics.pose().popPose();
-        }
+        super.render(graphics, mouseX, mouseY, partialTick);
         this.renderTooltip(graphics, mouseX, mouseY);
-    }
-
-    @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        return super.mouseClicked(layout.toLogicalX(mouseX), layout.toLogicalY(mouseY), button);
-    }
-
-    @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        return super.mouseReleased(layout.toLogicalX(mouseX), layout.toLogicalY(mouseY), button);
-    }
-
-    @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-        return super.mouseDragged(layout.toLogicalX(mouseX), layout.toLogicalY(mouseY), button,
-                layout.toLogicalDelta(dragX), layout.toLogicalDelta(dragY));
-    }
-
-    @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
-        return super.mouseScrolled(layout.toLogicalX(mouseX), layout.toLogicalY(mouseY), amount);
-    }
-
-    @Override
-    public void mouseMoved(double mouseX, double mouseY) {
-        super.mouseMoved(layout.toLogicalX(mouseX), layout.toLogicalY(mouseY));
-    }
-
-    @Override
-    public int getGuiLeft() {
-        return layout == null || renderingScaled ? super.getGuiLeft()
-                : Mth.floor(layout.toScreenX(this.leftPos));
-    }
-
-    @Override
-    public int getGuiTop() {
-        return layout == null || renderingScaled ? super.getGuiTop()
-                : Mth.floor(layout.toScreenY(this.topPos));
-    }
-
-    @Override
-    public int getXSize() {
-        return layout == null || renderingScaled ? super.getXSize()
-                : Mth.ceil(this.imageWidth * (double) layout.scale());
-    }
-
-    @Override
-    public int getYSize() {
-        return layout == null || renderingScaled ? super.getYSize()
-                : Mth.ceil(this.imageHeight * (double) layout.scale());
     }
 }
