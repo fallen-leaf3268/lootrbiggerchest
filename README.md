@@ -4,7 +4,7 @@
 
 本分支用于 Minecraft 1.21.1、NeoForge 21.1.195 及以上的 21.1 系列，需要 Java 21 和 Lootr 1.21.1-1.11.38.127 或更新的 Minecraft 1.21.1 版本。开发基线使用 NeoForge 21.1.262。
 
-使用 Java 21 执行 `./gradlew build`，成品位于 `build/libs/lootrbiggerchest-neoforge-1.21.1-1.0.2.jar`。1.20.1 Forge 版本保留在 `main` 分支。
+使用 Java 21 执行 `./gradlew build`，成品位于 `build/libs/lootrbiggerchest-neoforge-1.21.1-1.0.3.jar`。1.20.1 Forge 版本保留在 `main` 分支。
 
 ## 兼容的容器
 
