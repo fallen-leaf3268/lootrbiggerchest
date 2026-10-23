@@ -6,3 +6,6 @@ bin/
 *.zip
 /docs/
 /src/test/
+**/src/test/
+logs/
+*.bak
